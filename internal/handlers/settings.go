@@ -3,11 +3,12 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/puppe1990/cais/pkg/cais/meta"
+	inertia "github.com/romsar/gonertia/v3"
+
 	"github.com/puppe1990/aws-finops/internal/awsinv"
 	"github.com/puppe1990/aws-finops/internal/finops"
 	"github.com/puppe1990/aws-finops/internal/store"
-	"github.com/puppe1990/cais/pkg/cais/meta"
-	inertia "github.com/romsar/gonertia/v3"
 )
 
 type SettingsHandler struct {

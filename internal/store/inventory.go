@@ -43,7 +43,7 @@ func (s *SQLiteStore) ListResourcesForTenant(tenantID int64) ([]models.CloudReso
 	if err != nil {
 		return nil, fmt.Errorf("list resources: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanResources(rows)
 }
 
@@ -58,7 +58,7 @@ func (s *SQLiteStore) ListResources(accountID int64) ([]models.CloudResource, er
 	if err != nil {
 		return nil, fmt.Errorf("list account resources: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	return scanResources(rows)
 }
 
@@ -103,7 +103,7 @@ func (s *SQLiteStore) ListCostLines(accountID int64) ([]models.CostLine, error) 
 	if err != nil {
 		return nil, fmt.Errorf("list cost lines: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.CostLine
 	for rows.Next() {
 		var line models.CostLine
@@ -144,7 +144,7 @@ func (s *SQLiteStore) ListFindings(accountID int64) ([]models.Finding, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list findings: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.Finding
 	for rows.Next() {
 		var f models.Finding
@@ -167,7 +167,7 @@ func (s *SQLiteStore) ListFindingsForTenant(tenantID int64) ([]models.Finding, e
 	if err != nil {
 		return nil, fmt.Errorf("list tenant findings: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.Finding
 	for rows.Next() {
 		var f models.Finding
@@ -243,7 +243,7 @@ func (s *SQLiteStore) ListBudgets(tenantID int64) ([]models.Budget, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list budgets: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.Budget
 	for rows.Next() {
 		var b models.Budget

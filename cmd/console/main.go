@@ -3,9 +3,10 @@ package main
 import (
 	"log"
 
-	"github.com/puppe1990/aws-finops/internal/store"
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/console"
+
+	"github.com/puppe1990/aws-finops/internal/store"
 )
 
 func openStore(cfg cais.Config) (*store.SQLiteStore, error) {
@@ -42,6 +43,6 @@ func main() {
 			return bindings(active), nil
 		},
 	}); err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 }

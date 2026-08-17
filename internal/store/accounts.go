@@ -62,7 +62,7 @@ func (s *SQLiteStore) ListCloudAccounts(tenantID int64) ([]models.CloudAccount, 
 	if err != nil {
 		return nil, fmt.Errorf("list cloud accounts: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.CloudAccount
 	for rows.Next() {
 		acc, err := scanCloudAccountRow(rows)

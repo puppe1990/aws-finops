@@ -3,9 +3,10 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/puppe1990/aws-finops/internal/store"
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	inertia "github.com/romsar/gonertia/v3"
+
+	"github.com/puppe1990/aws-finops/internal/store"
 )
 
 type ResourcesHandler struct {

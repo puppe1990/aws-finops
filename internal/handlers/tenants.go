@@ -6,13 +6,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/puppe1990/aws-finops/internal/finops"
-	"github.com/puppe1990/aws-finops/internal/store"
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/flash"
 	"github.com/puppe1990/cais/pkg/cais/httpx"
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	inertia "github.com/romsar/gonertia/v3"
+
+	"github.com/puppe1990/aws-finops/internal/finops"
+	"github.com/puppe1990/aws-finops/internal/store"
 )
 
 type TenantsHandler struct {

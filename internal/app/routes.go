@@ -3,9 +3,10 @@ package app
 import (
 	"net/http"
 
-	"github.com/puppe1990/aws-finops/internal/handlers"
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/middleware"
+
+	"github.com/puppe1990/aws-finops/internal/handlers"
 )
 
 func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {

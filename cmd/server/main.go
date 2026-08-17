@@ -6,6 +6,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/cais/pkg/cais/boot"
+	"github.com/puppe1990/cais/pkg/cais/meta"
+	inertia "github.com/romsar/gonertia/v3"
+
 	"github.com/puppe1990/aws-finops/internal/app"
 	"github.com/puppe1990/aws-finops/internal/awsinv"
 	"github.com/puppe1990/aws-finops/internal/crypto"
@@ -14,10 +19,6 @@ import (
 	"github.com/puppe1990/aws-finops/internal/store"
 	"github.com/puppe1990/aws-finops/internal/syncer"
 	"github.com/puppe1990/aws-finops/web"
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/boot"
-	"github.com/puppe1990/cais/pkg/cais/meta"
-	inertia "github.com/romsar/gonertia/v3"
 )
 
 func main() {
@@ -51,10 +52,6 @@ func main() {
 	if err := a.Run(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func bootstrap() (*app.App, error) {
-	return bootstrapWithConfig(cais.Load())
 }
 
 func bootstrapWithConfig(cfg cais.Config) (*app.App, error) {

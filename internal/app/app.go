@@ -8,9 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/puppe1990/aws-finops/internal/crypto"
-	"github.com/puppe1990/aws-finops/internal/store"
-	"github.com/puppe1990/aws-finops/internal/syncer"
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/devlog"
 	"github.com/puppe1990/cais/pkg/cais/i18n"
@@ -18,6 +15,10 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/middleware"
 	"github.com/puppe1990/cais/pkg/cais/netutil"
 	inertia "github.com/romsar/gonertia/v3"
+
+	"github.com/puppe1990/aws-finops/internal/crypto"
+	"github.com/puppe1990/aws-finops/internal/store"
+	"github.com/puppe1990/aws-finops/internal/syncer"
 )
 
 const DevAppSecretDefault = "cifra-dev-only-change-me"

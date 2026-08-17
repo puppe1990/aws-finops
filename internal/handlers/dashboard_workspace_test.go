@@ -5,10 +5,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/puppe1990/aws-finops/internal/finops"
-	"github.com/puppe1990/aws-finops/internal/seed"
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/session"
+
+	"github.com/puppe1990/aws-finops/internal/finops"
+	"github.com/puppe1990/aws-finops/internal/seed"
 )
 
 func TestDashboardHandler_showsSeededAccount(t *testing.T) {

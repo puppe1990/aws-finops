@@ -7,10 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/puppe1990/aws-finops/internal/store"
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/i18n"
 	"github.com/puppe1990/cais/pkg/cais/session"
+
+	"github.com/puppe1990/aws-finops/internal/store"
 )
 
 func newAuthHandler(t *testing.T) (*AuthHandler, store.Store) {

@@ -5,15 +5,16 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/puppe1990/cais/pkg/cais"
+	"github.com/puppe1990/cais/pkg/cais/flash"
+	"github.com/puppe1990/cais/pkg/cais/meta"
+	inertia "github.com/romsar/gonertia/v3"
+
 	"github.com/puppe1990/aws-finops/internal/costest"
 	"github.com/puppe1990/aws-finops/internal/finops"
 	"github.com/puppe1990/aws-finops/internal/models"
 	"github.com/puppe1990/aws-finops/internal/store"
 	"github.com/puppe1990/aws-finops/internal/syncer"
-	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/flash"
-	"github.com/puppe1990/cais/pkg/cais/meta"
-	inertia "github.com/romsar/gonertia/v3"
 )
 
 type DashboardHandler struct {

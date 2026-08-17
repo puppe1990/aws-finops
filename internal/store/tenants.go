@@ -80,7 +80,7 @@ func (s *SQLiteStore) ListTenantsForUser(userID int64) ([]models.Tenant, error) 
 	if err != nil {
 		return nil, fmt.Errorf("list tenants: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	var out []models.Tenant
 	for rows.Next() {
 		var t models.Tenant

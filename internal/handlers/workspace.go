@@ -6,13 +6,14 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/puppe1990/aws-finops/internal/finops"
-	"github.com/puppe1990/aws-finops/internal/models"
-	"github.com/puppe1990/aws-finops/internal/store"
 	"github.com/puppe1990/cais/pkg/cais/flash"
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	"github.com/puppe1990/cais/pkg/cais/session"
 	inertia "github.com/romsar/gonertia/v3"
+
+	"github.com/puppe1990/aws-finops/internal/finops"
+	"github.com/puppe1990/aws-finops/internal/models"
+	"github.com/puppe1990/aws-finops/internal/store"
 )
 
 type workspace struct {
