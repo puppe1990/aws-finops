@@ -30,11 +30,7 @@ func NewContactHandler(renderer *cais.Renderer, s store.Store, site meta.Site, c
 }
 
 func (h *ContactHandler) Get(w http.ResponseWriter, r *http.Request) {
-	props := inertia.Props{"site": meta.ForRequest(h.site, r)}
-	if msg, ok := flash.MessageFromRequest(r); ok {
-		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
-	}
-	_ = h.inertia.Render(w, r, "Contact", props)
+	_ = h.inertia.Render(w, r, "Contact", publicProps(h.site, r, h.cfg.Locale))
 }
 
 func (h *ContactHandler) Post(w http.ResponseWriter, r *http.Request) {

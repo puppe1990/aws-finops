@@ -32,7 +32,7 @@ func (h *BudgetsHandler) List(w http.ResponseWriter, r *http.Request) {
 		h.inertia.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	view, err := buildTenantView(h.store, ws.Tenant.ID)
+	view, err := buildTenantView(h.store, ws.Tenant.ID, requestCatalog(r, h.cfg.Locale))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -56,7 +56,7 @@ func (h *BudgetsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.FormValue("name"))
 	amount, _ := strconv.ParseFloat(strings.ReplaceAll(r.FormValue("amount_usd"), ",", "."), 64)
 	if name == "" || amount <= 0 {
-		flash.Set(w, "alert", "Informe nome e valor do orçamento.", h.cfg.CookieSecure())
+		flash.Set(w, "alert", requestCatalog(r, h.cfg.Locale).T("bud.need_fields"), h.cfg.CookieSecure())
 		h.inertia.Redirect(w, r, "/budgets", http.StatusSeeOther)
 		return
 	}
@@ -69,6 +69,6 @@ func (h *BudgetsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	flash.Set(w, "notice", "Orçamento criado.", h.cfg.CookieSecure())
+	flash.Set(w, "notice", requestCatalog(r, h.cfg.Locale).T("bud.created"), h.cfg.CookieSecure())
 	h.inertia.Redirect(w, r, "/budgets", http.StatusSeeOther)
 }

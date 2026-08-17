@@ -1,11 +1,14 @@
 <script>
   import { inertia, page, router } from '@inertiajs/svelte'
   import FlashBanner from './FlashBanner.svelte'
+  import LocaleToggle from './LocaleToggle.svelte'
+  import { t } from '../i18n.js'
   import { readTheme, toggleTheme } from '../theme.js'
 
   export let site = {}
   export let flash = {}
   export let labels = {}
+  export let locale = 'en'
   export let tenant = null
   export let tenants = []
   export let userEmail = ''
@@ -16,13 +19,13 @@
     theme = toggleTheme(theme)
   }
 
-  const nav = [
-    { href: '/dashboard', label: 'Livro-caixa' },
-    { href: '/resources', label: 'Recursos' },
-    { href: '/accounts', label: 'Contas AWS' },
-    { href: '/budgets', label: 'Orçamentos' },
-    { href: '/tenants', label: 'Workspaces' },
-    { href: '/settings', label: 'IAM & sync' },
+  $: nav = [
+    { href: '/dashboard', label: t(labels, 'nav.ledger') },
+    { href: '/resources', label: t(labels, 'nav.resources') },
+    { href: '/accounts', label: t(labels, 'nav.accounts') },
+    { href: '/budgets', label: t(labels, 'nav.budgets') },
+    { href: '/tenants', label: t(labels, 'nav.tenants') },
+    { href: '/settings', label: t(labels, 'nav.settings') },
   ]
 
   function isActive(href) {
@@ -66,6 +69,7 @@
           <p class="mt-3 hidden font-mono text-xs text-paper-200 md:block">{tenant.name}</p>
         {/if}
         <div class="flex items-center gap-3 md:hidden">
+          <LocaleToggle {locale} {labels} />
           <button
             type="button"
             class="font-mono text-[11px] uppercase tracking-widest text-paper-200"
@@ -73,14 +77,14 @@
             aria-pressed={theme === 'light'}
             on:click={flipTheme}
           >
-            {theme === 'light' ? 'Escuro' : 'Claro'}
+            {theme === 'light' ? t(labels, 'theme.dark') : t(labels, 'theme.light')}
           </button>
           <button
             type="button"
             class="font-mono text-[11px] uppercase tracking-widest text-paper-200"
             on:click={logout}
           >
-            Sair
+            {t(labels, 'auth.logout')}
           </button>
         </div>
       </div>
@@ -103,7 +107,7 @@
       <div class="hidden space-y-3 border-t border-ink-700 p-4 md:block">
         {#if tenants?.length > 1}
           <label class="block font-mono text-[10px] uppercase tracking-widest text-paper-200">
-            Workspace
+            {t(labels, 'workspace')}
             <select
               class="mt-1 w-full rounded-sm border border-ink-700 bg-ink-800 px-2 py-1.5 text-xs text-paper-50"
               on:change={switchTenant}
@@ -117,6 +121,7 @@
         {#if userEmail}
           <p class="truncate font-mono text-[11px] text-paper-200">{userEmail}</p>
         {/if}
+        <LocaleToggle {locale} {labels} />
         <button
           type="button"
           class="flex w-full items-center justify-between rounded-sm border border-ink-700 px-3 py-2 text-left text-sm text-paper-200 hover:border-copper-500 hover:text-copper-400"
@@ -124,7 +129,7 @@
           aria-pressed={theme === 'light'}
           on:click={flipTheme}
         >
-          {theme === 'light' ? 'Modo escuro' : 'Modo claro'}
+          {theme === 'light' ? t(labels, 'theme.dark') : t(labels, 'theme.light')}
         </button>
         <button
           type="button"
@@ -132,7 +137,7 @@
           data-testid="logout-button"
           on:click={logout}
         >
-          {labels.logout || 'Sair'}
+          {t(labels, 'auth.logout')}
         </button>
       </div>
     </aside>

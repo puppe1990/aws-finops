@@ -7,11 +7,14 @@ import (
 	"strings"
 
 	"github.com/puppe1990/cais/pkg/cais/flash"
+	"github.com/puppe1990/cais/pkg/cais/i18n"
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	"github.com/puppe1990/cais/pkg/cais/session"
 	inertia "github.com/romsar/gonertia/v3"
 
 	"github.com/puppe1990/aws-finops/internal/finops"
+	appi18n "github.com/puppe1990/aws-finops/internal/i18n"
+	"github.com/puppe1990/aws-finops/internal/locale"
 	"github.com/puppe1990/aws-finops/internal/models"
 	"github.com/puppe1990/aws-finops/internal/store"
 )
@@ -79,18 +82,31 @@ func slugFromEmail(email string, userID int64) string {
 	return fmt.Sprintf("%s-%d", local, userID)
 }
 
-func shellProps(hSite meta.Site, r *http.Request, s store.Store, ws workspace) inertia.Props {
-	tenants, _ := s.ListTenantsForUser(ws.User.ID)
+func requestCatalog(r *http.Request, fallback string) *i18n.Catalog {
+	return appi18n.NewCatalog(locale.FromRequest(r, fallback))
+}
+
+func publicProps(site meta.Site, r *http.Request, fallback string) inertia.Props {
+	loc := locale.FromRequest(r, fallback)
 	props := inertia.Props{
-		"site":       meta.ForRequest(hSite, r),
-		"userEmail":  ws.User.Email,
-		"tenant":     map[string]any{"id": ws.Tenant.ID, "name": ws.Tenant.Name, "slug": ws.Tenant.Slug, "role": ws.Role},
-		"tenants":    tenantsProps(tenants),
-		"primaryAws": finops.SeedAWSAccountID(),
+		"site":     meta.ForRequest(site, r),
+		"locale":   loc,
+		"htmlLang": appi18n.NewCatalog(loc).HTMLLang(),
+		"labels":   appi18n.Labels(loc),
 	}
 	if msg, ok := flash.MessageFromRequest(r); ok {
 		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
 	}
+	return props
+}
+
+func shellProps(hSite meta.Site, r *http.Request, s store.Store, ws workspace) inertia.Props {
+	tenants, _ := s.ListTenantsForUser(ws.User.ID)
+	props := publicProps(hSite, r, "en")
+	props["userEmail"] = ws.User.Email
+	props["tenant"] = map[string]any{"id": ws.Tenant.ID, "name": ws.Tenant.Name, "slug": ws.Tenant.Slug, "role": ws.Role}
+	props["tenants"] = tenantsProps(tenants)
+	props["primaryAws"] = finops.SeedAWSAccountID()
 	return props
 }
 

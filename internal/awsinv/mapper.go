@@ -75,8 +75,6 @@ func FindingsFromResources(resources []models.CloudResource, ceDenied bool) []mo
 		out = append(out, models.Finding{
 			Kind:     finops.FindingCEDenied,
 			Severity: "warning",
-			Title:    "Cost Explorer sem permissão",
-			Detail:   "A IAM desta conta não permite ce:GetCostAndUsage. O Cifra estima o gasto pelo inventário (Lightsail + S3).",
 		})
 	}
 	unknownS3 := 0
@@ -85,16 +83,14 @@ func FindingsFromResources(resources []models.CloudResource, ceDenied bool) []mo
 			out = append(out, models.Finding{
 				Kind:     finops.FindingUnattachedIP,
 				Severity: "warning",
-				Title:    "IP estático ocioso: " + r.Name,
-				Detail:   "IP Lightsail sem instância custa cerca de US$ 3/mês.",
+				Title:    r.Name,
 			})
 		}
 		if r.Kind == "lightsail_instance" && r.State == "stopped" && r.MonthlyCents > 0 {
 			out = append(out, models.Finding{
 				Kind:     finops.FindingStoppedBill,
 				Severity: "info",
-				Title:    "Instância parada ainda cobra: " + r.Name,
-				Detail:   "Lightsail cobra o plano mesmo com a instância stopped.",
+				Title:    r.Name,
 			})
 		}
 		if r.Kind == "s3_bucket" && r.MonthlyCents == 0 {
@@ -105,8 +101,7 @@ func FindingsFromResources(resources []models.CloudResource, ceDenied bool) []mo
 		out = append(out, models.Finding{
 			Kind:     finops.FindingUnknownS3Size,
 			Severity: "info",
-			Title:    fmt.Sprintf("%d buckets S3 sem tamanho", unknownS3),
-			Detail:   "Sem CloudWatch o Cifra não estima storage. Libere cloudwatch:GetMetricStatistics ou s3:ListBucket.",
+			Title:    fmt.Sprintf("%d", unknownS3),
 		})
 	}
 	return out

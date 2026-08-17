@@ -3,6 +3,7 @@
   export let errors = {}
   export let flash = {}
   export let site = {}
+  export let labels = {}
   // useForm is not a store (no $form). Avoid $: form.x = prop — can blank the page under Svelte 5.
   let form = useForm({ name: '', email: '' })
   function submit() {
@@ -11,11 +12,11 @@
 </script>
 
 <svelte:head>
-  <title>Contact · aws-finops</title>
+  <title>{labels['contact.title'] || 'Contact'} · Cifra</title>
 </svelte:head>
 
 <div class="max-w-md mx-auto p-6">
-  <h1 class="text-2xl font-semibold mb-4">Contact</h1>
+  <h1 class="text-2xl font-semibold mb-4">{labels['contact.heading'] || 'Contact'}</h1>
   {#if flash.success}
     <p class="mb-4 text-green-700" data-testid="contact-success">{flash.success}</p>
   {/if}

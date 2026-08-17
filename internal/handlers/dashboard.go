@@ -7,6 +7,7 @@ import (
 
 	"github.com/puppe1990/cais/pkg/cais"
 	"github.com/puppe1990/cais/pkg/cais/flash"
+	"github.com/puppe1990/cais/pkg/cais/i18n"
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	inertia "github.com/romsar/gonertia/v3"
 
@@ -69,7 +70,7 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for k, v := range shellProps(h.site, r, h.store, ws) {
 		props[k] = v
 	}
-	view, err := buildTenantView(h.store, ws.Tenant.ID)
+	view, err := buildTenantView(h.store, ws.Tenant.ID, requestCatalog(r, h.cfg.Locale))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -94,7 +95,7 @@ type tenantView struct {
 	LastSync  map[string]any
 }
 
-func buildTenantView(s store.Store, tenantID int64) (tenantView, error) {
+func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog) (tenantView, error) {
 	resources, err := s.ListResourcesForTenant(tenantID)
 	if err != nil {
 		return tenantView{}, err
@@ -141,7 +142,7 @@ func buildTenantView(s store.Store, tenantID int64) (tenantView, error) {
 	if monthly == 0 {
 		for _, r := range resources {
 			monthly += r.MonthlyCents
-			lines = append(lines, costest.Line{Service: resourceKindLabel(r.Kind), MonthlyCents: r.MonthlyCents})
+			lines = append(lines, costest.Line{Service: resourceKindLabel(r.Kind, cat), MonthlyCents: r.MonthlyCents})
 		}
 	}
 	now := time.Now()
@@ -169,21 +170,21 @@ func buildTenantView(s store.Store, tenantID int64) (tenantView, error) {
 			"ceDenied":      hasFinding(findings, finops.FindingCEDenied),
 		},
 		Services:  services,
-		Resources: resourceProps(resources),
-		Findings:  findingProps(findings),
+		Resources: resourceProps(resources, cat),
+		Findings:  findingProps(findings, cat),
 		Budgets:   budgetProps(budgets, monthly),
 		Accounts:  accountProps(accounts),
 		LastSync:  lastSync,
 	}, nil
 }
 
-func resourceProps(resources []models.CloudResource) []map[string]any {
+func resourceProps(resources []models.CloudResource, cat *i18n.Catalog) []map[string]any {
 	out := make([]map[string]any, 0, len(resources))
 	for _, r := range resources {
 		out = append(out, map[string]any{
 			"id":     r.ID,
 			"kind":   r.Kind,
-			"label":  resourceKindLabel(r.Kind),
+			"label":  resourceKindLabel(r.Kind, cat),
 			"name":   r.Name,
 			"region": r.Region,
 			"state":  r.State,
@@ -195,11 +196,12 @@ func resourceProps(resources []models.CloudResource) []map[string]any {
 	return out
 }
 
-func findingProps(findings []models.Finding) []map[string]any {
+func findingProps(findings []models.Finding, cat *i18n.Catalog) []map[string]any {
 	out := make([]map[string]any, 0, len(findings))
 	for _, f := range findings {
+		title, detail := translateFinding(cat, f)
 		out = append(out, map[string]any{
-			"kind": f.Kind, "severity": f.Severity, "title": f.Title, "detail": f.Detail,
+			"kind": f.Kind, "severity": f.Severity, "title": title, "detail": detail,
 		})
 	}
 	return out

@@ -1,16 +1,18 @@
-# Cifra — FinOps AWS
+# Cifra — AWS FinOps
 
-Ferramenta de FinOps multi-tenant para AWS, gerada com [Cais](https://github.com/puppe1990/cais) (Go + Inertia + Svelte + SQLite).
+Multi-tenant AWS FinOps, built with [Cais](https://github.com/puppe1990/cais) (Go + Inertia + Svelte + SQLite).
 
-## O que ela faz
+The app UI is available in **English** and **Brazilian Portuguese**. Use the **EN / PT** control in the sidebar (and on the public pages) to switch. The choice is stored in the `cifra_locale` cookie.
 
-- Isola clientes em workspaces (tenants): contas, inventário, orçamentos e achados não vazam
-- Sincroniza Cost Explorer quando a IAM permite `ce:GetCostAndUsage`
-- Sem CE, estima o burn pelo inventário: Lightsail (instâncias + IPs) e S3
-- Mostra a policy IAM mínima para destravar billing real
-- Permite vincular outras contas AWS por workspace (cadeia padrão ou access keys cifradas)
+## What it does
 
-Login de desenvolvimento: `demo@example.com` / `password`.
+- Isolates customers in workspaces (tenants): accounts, inventory, budgets, and findings never leak
+- Syncs Cost Explorer when IAM allows `ce:GetCostAndUsage`
+- Without CE, estimates monthly burn from inventory: Lightsail (instances + IPs) and S3
+- Shows the minimum IAM policy needed for real billing data
+- Lets each workspace link more AWS accounts (default credential chain or encrypted access keys)
+
+Development login: `demo@example.com` / `password`.
 
 ## Stack
 
@@ -23,29 +25,29 @@ Login de desenvolvimento: `demo@example.com` / `password`.
 
 ```bash
 export PATH="$HOME/go/bin:$PATH"
-export LOCALE=pt
-cp .env.example .env   # preencha CIFRA_SEED_AWS_ACCOUNT_ID se quiser seedar uma conta
+export LOCALE=en
+cp .env.example .env   # set CIFRA_SEED_AWS_ACCOUNT_ID if you want a seeded account
 cais install
 cais dev               # http://localhost:8080
 ```
 
-A primeira visita ao dashboard sincroniza as contas do workspace ativo (cadeia `~/.aws` ou access keys do tenant).
+The first visit to the ledger syncs accounts on the active workspace (local `~/.aws` chain or tenant access keys).
 
-## Seed da sua conta (opcional, local)
+## Seed your account (optional, local only)
 
-Não commite account IDs. No `.env` (gitignored):
+Do not commit account IDs. In `.env` (gitignored):
 
 ```
 CIFRA_SEED_AWS_ACCOUNT_ID=xxxxxxxxxxxx
 ```
 
-Sem essa variável o workspace Demo nasce vazio e você vincula a conta pela UI.
+Without that variable the Demo workspace starts empty and you link the account in the UI.
 
-## IAM recomendada
+## Recommended IAM
 
-Cole a policy em `/settings` numa role de leitura de FinOps. Sem `ce:GetCostAndUsage` o Cifra estima pelo inventário.
+Paste the policy from `/settings` onto a FinOps read role. Without `ce:GetCostAndUsage`, Cifra estimates from inventory.
 
-## Testes
+## Tests
 
 ```bash
 cais test

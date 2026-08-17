@@ -78,13 +78,13 @@ func (h *AccountsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 	var errs validate.FieldErrors
 	if len(awsID) != 12 {
-		errs.Add("aws_account_id", "Informe o account ID com 12 dígitos.")
+		errs.Add("aws_account_id", requestCatalog(r, h.cfg.Locale).T("acc.err_id"))
 	}
 	if alias == "" {
-		errs.Add("alias", "Dê um apelido para a conta.")
+		errs.Add("alias", requestCatalog(r, h.cfg.Locale).T("acc.err_alias"))
 	}
 	if mode == finops.AuthModeAccessKeys && r.FormValue("access_key_id") == "" {
-		errs.Add("access_key_id", "Access key obrigatória neste modo.")
+		errs.Add("access_key_id", requestCatalog(r, h.cfg.Locale).T("acc.err_key"))
 	}
 	if errs.Any() {
 		ve := make(inertia.ValidationErrors)
@@ -122,7 +122,7 @@ func (h *AccountsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	flash.Set(w, "notice", "Conta AWS vinculada ao workspace.", h.cfg.CookieSecure())
+	flash.Set(w, "notice", requestCatalog(r, h.cfg.Locale).T("acc.linked"), h.cfg.CookieSecure())
 	h.inertia.Redirect(w, r, "/accounts", http.StatusSeeOther)
 }
 
@@ -133,16 +133,16 @@ func (h *AccountsHandler) Sync(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.syncer == nil {
-		flash.Set(w, "alert", "Coletor AWS não configurado.", h.cfg.CookieSecure())
+		flash.Set(w, "alert", requestCatalog(r, h.cfg.Locale).T("acc.sync_none"), h.cfg.CookieSecure())
 		h.inertia.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 40*time.Second)
 	defer cancel()
 	if err := h.syncer.SyncTenant(ctx, ws.Tenant.ID); err != nil {
-		flash.Set(w, "alert", "Falha ao sincronizar: "+err.Error(), h.cfg.CookieSecure())
+		flash.Set(w, "alert", requestCatalog(r, h.cfg.Locale).T("acc.sync_fail", err.Error()), h.cfg.CookieSecure())
 	} else {
-		flash.Set(w, "notice", "Inventário atualizado a partir da AWS.", h.cfg.CookieSecure())
+		flash.Set(w, "notice", requestCatalog(r, h.cfg.Locale).T("acc.sync_ok"), h.cfg.CookieSecure())
 	}
 	h.inertia.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }

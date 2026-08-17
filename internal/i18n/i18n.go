@@ -18,3 +18,17 @@ func NewCatalog(locale string) *caisi18n.Catalog {
 func DefaultCatalog() *caisi18n.Catalog {
 	return NewCatalog(caisi18n.DefaultLocale)
 }
+
+// Labels returns a copy of all UI strings for the locale (en or pt).
+func Labels(locale string) map[string]string {
+	cat := NewCatalog(locale)
+	src := locales[cat.Locale()]
+	if src == nil {
+		src = locales["en"]
+	}
+	out := make(map[string]string, len(src))
+	for k, v := range src {
+		out[k] = v
+	}
+	return out
+}

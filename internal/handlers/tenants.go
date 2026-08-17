@@ -50,13 +50,13 @@ func (h *TenantsHandler) Create(w http.ResponseWriter, r *http.Request) {
 	name := strings.TrimSpace(r.FormValue("name"))
 	slug := slugify(r.FormValue("slug"), name)
 	if name == "" || slug == "" {
-		flash.Set(w, "alert", "Informe nome e slug do workspace.", h.cfg.CookieSecure())
+		flash.Set(w, "alert", requestCatalog(r, h.cfg.Locale).T("ten.need_name"), h.cfg.CookieSecure())
 		h.inertia.Redirect(w, r, "/tenants", http.StatusSeeOther)
 		return
 	}
 	id, err := h.store.CreateTenant(name, slug)
 	if err != nil {
-		flash.Set(w, "alert", "Não foi possível criar o workspace (slug já existe?).", h.cfg.CookieSecure())
+		flash.Set(w, "alert", requestCatalog(r, h.cfg.Locale).T("ten.slug_taken"), h.cfg.CookieSecure())
 		h.inertia.Redirect(w, r, "/tenants", http.StatusSeeOther)
 		return
 	}
@@ -65,7 +65,7 @@ func (h *TenantsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = h.store.SetActiveTenant(ws.User.ID, id)
-	flash.Set(w, "notice", "Workspace criado. Vincule uma conta AWS.", h.cfg.CookieSecure())
+	flash.Set(w, "notice", requestCatalog(r, h.cfg.Locale).T("ten.created"), h.cfg.CookieSecure())
 	h.inertia.Redirect(w, r, "/accounts", http.StatusSeeOther)
 }
 
@@ -81,7 +81,7 @@ func (h *TenantsHandler) Switch(w http.ResponseWriter, r *http.Request) {
 	}
 	id, _ := strconv.ParseInt(r.FormValue("tenant_id"), 10, 64)
 	if _, ok, err := h.store.MembershipRole(id, ws.User.ID); err != nil || !ok {
-		flash.Set(w, "alert", "Você não participa desse workspace.", h.cfg.CookieSecure())
+		flash.Set(w, "alert", requestCatalog(r, h.cfg.Locale).T("ten.not_member"), h.cfg.CookieSecure())
 		h.inertia.Redirect(w, r, "/tenants", http.StatusSeeOther)
 		return
 	}
@@ -89,7 +89,7 @@ func (h *TenantsHandler) Switch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	flash.Set(w, "notice", "Workspace ativo trocado.", h.cfg.CookieSecure())
+	flash.Set(w, "notice", requestCatalog(r, h.cfg.Locale).T("ten.switched"), h.cfg.CookieSecure())
 	h.inertia.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 }
 

@@ -19,6 +19,7 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	budgets := handlers.NewBudgetsHandler(deps.Store, deps.Site, cfg, deps.Inertia)
 	tenants := handlers.NewTenantsHandler(deps.Store, deps.Site, cfg, deps.Inertia)
 	settings := handlers.NewSettingsHandler(deps.Store, deps.Site, deps.Inertia)
+	loc := handlers.NewLocaleHandler(cfg, deps.Inertia)
 
 	loginLimit := middleware.NewRateLimiter(10, cfg)
 	resetLimit := middleware.NewRateLimiter(10, cfg)
@@ -36,6 +37,7 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	r.Get("/reset-password", auth.ResetPassword)
 	r.Post("/reset-password", resetLimit.Middleware(http.HandlerFunc(auth.ResetPasswordPost)).ServeHTTP)
 	r.Post("/logout", auth.LogoutPost)
+	r.Post("/locale", loc.Post)
 
 	authN := func(next http.HandlerFunc) http.HandlerFunc {
 		return middleware.RequireAuthFunc("/login", next)

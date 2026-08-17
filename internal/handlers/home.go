@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/puppe1990/cais/pkg/cais"
-	"github.com/puppe1990/cais/pkg/cais/flash"
 	"github.com/puppe1990/cais/pkg/cais/i18n"
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	inertia "github.com/romsar/gonertia/v3"
@@ -27,22 +26,26 @@ func NewHomeHandler(renderer *cais.Renderer, site meta.Site, catalog *i18n.Catal
 
 func (h *HomeHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	site := meta.ForRequest(h.site, r)
-	props := inertia.Props{
-		"title": h.catalog.T("home.title"),
-		"site":  site,
-		"labels": map[string]string{
-			"heading":   h.catalog.T("home.rails_heading"),
-			"subtitle":  fmt.Sprintf(h.catalog.T("home.rails_subtitle"), site.AppName),
-			"stack":     h.catalog.T("home.stack"),
-			"contact":   h.catalog.T("home.contact_link"),
-			"login":     h.catalog.T("auth.login_submit"),
-			"dashboard": h.catalog.T("dashboard.title"),
-			"account":   finops.SeedAWSAccountID(),
-		},
+	cat := requestCatalog(r, h.cfg.Locale)
+	props := publicProps(h.site, r, h.cfg.Locale)
+	props["title"] = cat.T("home.title")
+	labels, _ := props["labels"].(map[string]string)
+	if labels == nil {
+		labels = map[string]string{}
 	}
-	if msg, ok := flash.MessageFromRequest(r); ok {
-		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
+	labels["heading"] = cat.T("home.rails_heading")
+	labels["subtitle"] = fmt.Sprintf(cat.T("home.rails_subtitle"), site.AppName)
+	labels["stack"] = cat.T("home.stack")
+	labels["contact"] = cat.T("home.contact_link")
+	labels["login"] = cat.T("auth.login_submit")
+	labels["dashboard"] = cat.T("dashboard.title")
+	labels["account"] = finops.SeedAWSAccountID()
+	if labels["account"] != "" {
+		labels["eyebrow"] = fmt.Sprintf(cat.T("home.eyebrow_seeded"), labels["account"])
+	} else {
+		labels["eyebrow"] = cat.T("home.eyebrow_empty")
 	}
+	props["labels"] = labels
 	if err := h.inertia.Render(w, r, "Home", props); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

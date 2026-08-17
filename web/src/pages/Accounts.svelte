@@ -1,6 +1,7 @@
 <script>
   import { useForm } from '@inertiajs/svelte'
   import AppLayout from '../components/AppLayout.svelte'
+  import { t } from '../i18n.js'
 
   export let accounts = []
   export let errors = {}
@@ -10,6 +11,8 @@
   export let tenants = []
   export let userEmail = ''
   export let policy = ''
+  export let labels = {}
+  export let locale = 'en'
 
   let authMode = 'default_chain'
   let form = useForm({
@@ -28,14 +31,13 @@
 </script>
 
 <svelte:head>
-  <title>Contas AWS · Cifra</title>
+  <title>{t(labels, 'acc.title')} · Cifra</title>
 </svelte:head>
 
-<AppLayout {site} {flash} {tenant} {tenants} {userEmail}>
-  <h2 class="font-display text-4xl">Contas AWS</h2>
+<AppLayout {site} {flash} {tenant} {tenants} {userEmail} {labels} {locale}>
+  <h2 class="font-display text-4xl">{t(labels, 'acc.title')}</h2>
   <p class="mt-2 max-w-2xl text-sm text-paper-200">
-    Cada workspace pode ter várias contas. Use a cadeia local (`~/.aws`) ou cole access keys
-    cifradas. Nada é commitado: o account ID de seed vem só de `CIFRA_SEED_AWS_ACCOUNT_ID`.
+    {t(labels, 'acc.lead')}
   </p>
 
   <ul class="mt-8 divide-y divide-ink-700 border border-paper-200/15">
@@ -47,40 +49,40 @@
         </div>
         {#if acc.primary}
           <span class="font-mono text-[10px] uppercase tracking-widest text-copper-400"
-            >principal</span
+            >{t(labels, 'acc.primary')}</span
           >
         {/if}
       </li>
     {:else}
-      <li class="bg-ink-900 px-4 py-6 text-sm">Nenhuma conta neste workspace.</li>
+      <li class="bg-ink-900 px-4 py-6 text-sm">{t(labels, 'acc.empty')}</li>
     {/each}
   </ul>
 
   <form on:submit|preventDefault={submit} class="mt-10 max-w-xl space-y-3 border border-paper-200/15 bg-ink-900 p-5">
-    <h3 class="font-display text-2xl">Vincular outra conta</h3>
+    <h3 class="font-display text-2xl">{t(labels, 'acc.link_other')}</h3>
     <input
       bind:value={form.aws_account_id}
-      placeholder="Account ID (12 dígitos)"
+      placeholder={t(labels, 'acc.ph_id')}
       class="w-full border border-paper-200/20 bg-ink-800 p-2.5 text-sm"
     />
     {#if errors.aws_account_id}<p class="text-xs text-copper-400">{errors.aws_account_id}</p>{/if}
     <input
       bind:value={form.alias}
-      placeholder="Apelido (ex. staging)"
+      placeholder={t(labels, 'acc.ph_alias')}
       class="w-full border border-paper-200/20 bg-ink-800 p-2.5 text-sm"
     />
     {#if errors.alias}<p class="text-xs text-copper-400">{errors.alias}</p>{/if}
     <input
       bind:value={form.region}
-      placeholder="Região"
+      placeholder={t(labels, 'acc.ph_region')}
       class="w-full border border-paper-200/20 bg-ink-800 p-2.5 text-sm"
     />
     <select
       bind:value={authMode}
       class="w-full border border-paper-200/20 bg-ink-800 p-2.5 text-sm"
     >
-      <option value="default_chain">Cadeia padrão (~/.aws)</option>
-      <option value="access_keys">Access key desta conta</option>
+      <option value="default_chain">{t(labels, 'acc.mode_chain')}</option>
+      <option value="access_keys">{t(labels, 'acc.mode_keys')}</option>
     </select>
     {#if authMode === 'access_keys'}
       <input
@@ -95,7 +97,7 @@
         class="w-full border border-paper-200/20 bg-ink-800 p-2.5 font-mono text-sm"
       />
     {/if}
-    <button type="submit" class="bg-copper-500 px-4 py-2 text-sm text-ink-950">Vincular</button>
+    <button type="submit" class="bg-copper-500 px-4 py-2 text-sm text-ink-950">{t(labels, 'acc.submit')}</button>
   </form>
 
   {#if policy}

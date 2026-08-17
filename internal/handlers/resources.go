@@ -31,6 +31,6 @@ func (h *ResourcesHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	props := shellProps(h.site, r, h.store, ws)
-	props["resources"] = resourceProps(resources)
+	props["resources"] = resourceProps(resources, requestCatalog(r, "en"))
 	_ = h.inertia.Render(w, r, "Resources", props)
 }
