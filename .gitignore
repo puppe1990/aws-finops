@@ -1,0 +1,13 @@
+bin/
+data/
+web/static/css/styles.css
+web/static/build/
+node_modules/
+tmp/
+.air/
+*.db
+.DS_Store
+.env
+.env.*
+!.env.example
+docs/screenshots/
