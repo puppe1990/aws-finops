@@ -59,6 +59,7 @@ function baseProps(extra = {}) {
 describe('Dashboard ledger', () => {
   it('shows the run-rate and hides the costliest table', () => {
     render(Dashboard, { props: baseProps() })
+    expect(screen.getByText('Amazon Lightsail')).toBeInTheDocument()
     expect(screen.getByText('US$ 32,15')).toBeInTheDocument()
     expect(screen.queryByText('Costliest resources')).not.toBeInTheDocument()
     expect(screen.queryByText('should-not-show')).not.toBeInTheDocument()
