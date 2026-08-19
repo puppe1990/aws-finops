@@ -12,6 +12,19 @@ func TestDefaultCatalog_english(t *testing.T) {
 	}
 }
 
+func TestLabels_dashboardBudgetLine(t *testing.T) {
+	en := Labels("en")
+	if en["dash.budget_line"] == "" {
+		t.Fatal("missing dash.budget_line")
+	}
+	if _, ok := en["dash.costliest"]; ok {
+		t.Fatal("dash.costliest should be removed")
+	}
+	if _, ok := en["dash.col_month"]; ok {
+		t.Fatal("dash.col_month should be removed")
+	}
+}
+
 func TestLabels_sameKeysEnAndPt(t *testing.T) {
 	en := Labels("en")
 	pt := Labels("pt-BR")
