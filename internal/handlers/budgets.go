@@ -11,6 +11,7 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	inertia "github.com/romsar/gonertia/v3"
 
+	"github.com/puppe1990/aws-finops/internal/awsinv"
 	"github.com/puppe1990/aws-finops/internal/models"
 	"github.com/puppe1990/aws-finops/internal/store"
 )
@@ -32,7 +33,7 @@ func (h *BudgetsHandler) List(w http.ResponseWriter, r *http.Request) {
 		h.inertia.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	view, err := buildTenantView(h.store, ws.Tenant.ID, requestCatalog(r, h.cfg.Locale))
+	view, err := buildTenantView(h.store, ws.Tenant.ID, requestCatalog(r, h.cfg.Locale), awsinv.LedgerMonth{IsCurrent: true}, nil, false)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
