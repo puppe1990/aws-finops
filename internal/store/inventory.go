@@ -83,9 +83,9 @@ func (s *SQLiteStore) ReplaceCostLines(accountID int64, lines []models.CostLine)
 	}
 	for _, line := range lines {
 		_, err := s.db.Exec(
-			`INSERT INTO cost_lines (cloud_account_id, service, monthly_cents, source, period_start, period_end)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-			accountID, line.Service, line.MonthlyCents, line.Source, line.PeriodStart, line.PeriodEnd,
+			`INSERT INTO cost_lines (cloud_account_id, service, usage_type, monthly_cents, source, period_start, period_end)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			accountID, line.Service, line.UsageType, line.MonthlyCents, line.Source, line.PeriodStart, line.PeriodEnd,
 		)
 		if err != nil {
 			return fmt.Errorf("insert cost line: %w", err)
@@ -96,7 +96,7 @@ func (s *SQLiteStore) ReplaceCostLines(accountID int64, lines []models.CostLine)
 
 func (s *SQLiteStore) ListCostLines(accountID int64) ([]models.CostLine, error) {
 	rows, err := s.db.Query(
-		`SELECT id, cloud_account_id, service, monthly_cents, source, period_start, period_end
+		`SELECT id, cloud_account_id, service, usage_type, monthly_cents, source, period_start, period_end
          FROM cost_lines WHERE cloud_account_id = ? ORDER BY monthly_cents DESC`,
 		accountID,
 	)
@@ -108,7 +108,7 @@ func (s *SQLiteStore) ListCostLines(accountID int64) ([]models.CostLine, error) 
 	for rows.Next() {
 		var line models.CostLine
 		if err := rows.Scan(
-			&line.ID, &line.CloudAccountID, &line.Service, &line.MonthlyCents,
+			&line.ID, &line.CloudAccountID, &line.Service, &line.UsageType, &line.MonthlyCents,
 			&line.Source, &line.PeriodStart, &line.PeriodEnd,
 		); err != nil {
 			return nil, err

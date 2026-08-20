@@ -32,6 +32,7 @@ type CostLine struct {
 	ID             int64
 	CloudAccountID int64
 	Service        string
+	UsageType      string
 	MonthlyCents   int64
 	Source         string
 	PeriodStart    string

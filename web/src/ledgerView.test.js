@@ -16,6 +16,18 @@ describe('spendRows', () => {
   it('returns empty when nothing has spend', () => {
     expect(spendRows([{ name: 'Glue', cents: 0 }])).toEqual([])
   })
+
+  it('keeps usage-type details on visible rows', () => {
+    const rows = spendRows([
+      {
+        name: 'Amazon Lightsail',
+        cents: 1947,
+        usd: 'US$ 19,47',
+        details: [{ name: 'BoxUsage:small_3_0', cents: 1900, usd: 'US$ 19,00' }],
+      },
+    ])
+    expect(rows[0].details).toEqual([{ name: 'BoxUsage:small_3_0', cents: 1900, usd: 'US$ 19,00' }])
+  })
 })
 
 describe('topFindings', () => {

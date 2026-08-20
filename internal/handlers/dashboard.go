@@ -53,6 +53,7 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"budgets":       []any{},
 		"accounts":      []any{},
 		"lastSync":      nil,
+		"flash":         inertia.Flash{},
 	}
 	if msg, ok := flash.MessageFromRequest(r); ok {
 		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
@@ -144,7 +145,7 @@ func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog, lm awsinv
 		return tenantView{}, err
 	}
 
-	monthly, lines, source, err := monthSpend(s, accounts, resources, cat, lm, overlay)
+	monthly, costLines, source, err := monthSpend(s, accounts, resources, cat, lm, overlay)
 	if err != nil {
 		return tenantView{}, err
 	}
@@ -171,7 +172,7 @@ func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog, lm awsinv
 			"resourceCount": len(resources),
 			"ceDenied":      denied,
 		},
-		Services:  serviceProps(lines),
+		Services:  serviceProps(costLines),
 		Resources: resourceProps(resources, cat),
 		Findings:  findingProps(shownFindings, cat),
 		Budgets:   budgetProps(budgets, monthly),
@@ -180,13 +181,13 @@ func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog, lm awsinv
 	}, nil
 }
 
-func monthSpend(s store.Store, accounts []models.CloudAccount, resources []models.CloudResource, cat *i18n.Catalog, lm awsinv.LedgerMonth, overlay []models.CostLine) (int64, []costest.Line, string, error) {
+func monthSpend(s store.Store, accounts []models.CloudAccount, resources []models.CloudResource, cat *i18n.Catalog, lm awsinv.LedgerMonth, overlay []models.CostLine) (int64, []models.CostLine, string, error) {
 	if !lm.IsCurrent {
 		monthly, lines, source := sumCostLines(overlay)
 		return monthly, lines, source, nil
 	}
 	var monthly int64
-	var lines []costest.Line
+	var lines []models.CostLine
 	source := finops.SourceEstimate
 	for _, acc := range accounts {
 		costLines, err := s.ListCostLines(acc.ID)
@@ -203,32 +204,24 @@ func monthSpend(s store.Store, accounts []models.CloudAccount, resources []model
 	if monthly == 0 {
 		for _, r := range resources {
 			monthly += r.MonthlyCents
-			lines = append(lines, costest.Line{Service: resourceKindLabel(r.Kind, cat), MonthlyCents: r.MonthlyCents})
+			lines = append(lines, models.CostLine{
+				Service: resourceKindLabel(r.Kind, cat), MonthlyCents: r.MonthlyCents, Source: r.Source,
+			})
 		}
 	}
 	return monthly, lines, source, nil
 }
 
-func sumCostLines(costLines []models.CostLine) (monthly int64, lines []costest.Line, source string) {
+func sumCostLines(costLines []models.CostLine) (monthly int64, lines []models.CostLine, source string) {
 	source = finops.SourceEstimate
 	for _, line := range costLines {
 		monthly += line.MonthlyCents
-		lines = append(lines, costest.Line{Service: line.Service, MonthlyCents: line.MonthlyCents})
+		lines = append(lines, line)
 		if line.Source == finops.SourceCE {
 			source = finops.SourceCE
 		}
 	}
 	return monthly, lines, source
-}
-
-func serviceProps(lines []costest.Line) []map[string]any {
-	services := []map[string]any{}
-	for _, g := range costest.GroupByService(lines) {
-		services = append(services, map[string]any{
-			"name": g.Service, "cents": g.MonthlyCents, "usd": formatUSD(g.MonthlyCents),
-		})
-	}
-	return services
 }
 
 func lastSyncProps(s store.Store, accounts []models.CloudAccount) map[string]any {

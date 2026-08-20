@@ -3,7 +3,6 @@ package awsinv
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -110,10 +109,10 @@ func collectCostExplorer(ctx context.Context, cfg aws.Config, period time.Time) 
 		},
 		Granularity: cetypes.GranularityMonthly,
 		Metrics:     []string{"UnblendedCost"},
-		GroupBy: []cetypes.GroupDefinition{{
-			Type: cetypes.GroupDefinitionTypeDimension,
-			Key:  aws.String("SERVICE"),
-		}},
+		GroupBy: []cetypes.GroupDefinition{
+			{Type: cetypes.GroupDefinitionTypeDimension, Key: aws.String("SERVICE")},
+			{Type: cetypes.GroupDefinitionTypeDimension, Key: aws.String("USAGE_TYPE")},
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -121,19 +120,12 @@ func collectCostExplorer(ctx context.Context, cfg aws.Config, period time.Time) 
 	var lines []models.CostLine
 	for _, result := range out.ResultsByTime {
 		for _, group := range result.Groups {
-			service := strings.Join(group.Keys, " ")
 			amount := group.Metrics["UnblendedCost"]
 			cents := parseUSDCents(aws.ToString(amount.Amount))
-			if cents == 0 && service == "" {
+			if cents == 0 && len(group.Keys) == 0 {
 				continue
 			}
-			lines = append(lines, models.CostLine{
-				Service:      service,
-				MonthlyCents: cents,
-				Source:       finops.SourceCE,
-				PeriodStart:  start,
-				PeriodEnd:    end,
-			})
+			lines = append(lines, CEGroupLine(group.Keys, cents, start, end))
 		}
 	}
 	return lines, nil
