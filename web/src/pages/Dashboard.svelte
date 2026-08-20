@@ -48,7 +48,7 @@
         {#if prevMonth}
           <a href="/dashboard?month={prevMonth}" use:inertia class="text-copper-400 hover:text-paper-50" aria-label={prevMonth}>‹</a>
         {/if}
-        <span>{monthLabel || t(labels, 'dash.month')}</span>
+        <span data-month={month}>{monthLabel || t(labels, 'dash.month')}</span>
         {#if nextMonth}
           <a href="/dashboard?month={nextMonth}" use:inertia class="text-copper-400 hover:text-paper-50" aria-label={nextMonth}>›</a>
         {/if}
