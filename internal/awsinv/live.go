@@ -3,7 +3,6 @@ package awsinv
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -39,7 +38,7 @@ func (l *Live) Collect(ctx context.Context, creds Credentials) (Inventory, error
 		creds.AccountID = id
 	}
 
-	ceLines, ceErr := collectCostExplorer(ctx, cfg)
+	ceLines, ceErr := collectCostExplorer(ctx, cfg, time.Now().UTC())
 	ceDenied := ceErr != nil && IsAccessDenied(ceErr)
 	if ceErr != nil {
 		inv.Warnings = append(inv.Warnings, "ce: "+ceErr.Error())
@@ -91,8 +90,18 @@ func callerAccount(ctx context.Context, cfg aws.Config) (string, error) {
 	return aws.ToString(out.Account), nil
 }
 
-func collectCostExplorer(ctx context.Context, cfg aws.Config) ([]models.CostLine, error) {
-	start, end := monthBounds(time.Now().UTC())
+func (l *Live) CostForMonth(ctx context.Context, creds Credentials, period time.Time) ([]models.CostLine, error) {
+	cfg, err := loadAWS(ctx, creds)
+	if err != nil {
+		return nil, err
+	}
+	return collectCostExplorer(ctx, cfg, period)
+}
+
+var _ MonthCoster = (*Live)(nil)
+
+func collectCostExplorer(ctx context.Context, cfg aws.Config, period time.Time) ([]models.CostLine, error) {
+	start, end := MonthBounds(period)
 	out, err := costexplorer.NewFromConfig(cfg).GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
 		TimePeriod: &cetypes.DateInterval{
 			Start: aws.String(start),
@@ -100,10 +109,10 @@ func collectCostExplorer(ctx context.Context, cfg aws.Config) ([]models.CostLine
 		},
 		Granularity: cetypes.GranularityMonthly,
 		Metrics:     []string{"UnblendedCost"},
-		GroupBy: []cetypes.GroupDefinition{{
-			Type: cetypes.GroupDefinitionTypeDimension,
-			Key:  aws.String("SERVICE"),
-		}},
+		GroupBy: []cetypes.GroupDefinition{
+			{Type: cetypes.GroupDefinitionTypeDimension, Key: aws.String("SERVICE")},
+			{Type: cetypes.GroupDefinitionTypeDimension, Key: aws.String("USAGE_TYPE")},
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -111,19 +120,12 @@ func collectCostExplorer(ctx context.Context, cfg aws.Config) ([]models.CostLine
 	var lines []models.CostLine
 	for _, result := range out.ResultsByTime {
 		for _, group := range result.Groups {
-			service := strings.Join(group.Keys, " ")
 			amount := group.Metrics["UnblendedCost"]
 			cents := parseUSDCents(aws.ToString(amount.Amount))
-			if cents == 0 && service == "" {
+			if cents == 0 && len(group.Keys) == 0 {
 				continue
 			}
-			lines = append(lines, models.CostLine{
-				Service:      service,
-				MonthlyCents: cents,
-				Source:       finops.SourceCE,
-				PeriodStart:  start,
-				PeriodEnd:    end,
-			})
+			lines = append(lines, CEGroupLine(group.Keys, cents, start, end))
 		}
 	}
 	return lines, nil

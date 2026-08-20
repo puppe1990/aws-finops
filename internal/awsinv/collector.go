@@ -2,6 +2,7 @@ package awsinv
 
 import (
 	"context"
+	"time"
 
 	"github.com/puppe1990/aws-finops/internal/models"
 )
@@ -24,4 +25,8 @@ type Inventory struct {
 
 type Collector interface {
 	Collect(ctx context.Context, creds Credentials) (Inventory, error)
+}
+
+type MonthCoster interface {
+	CostForMonth(ctx context.Context, creds Credentials, period time.Time) ([]models.CostLine, error)
 }

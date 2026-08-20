@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/puppe1990/aws-finops/internal/awsinv"
 	"github.com/puppe1990/aws-finops/internal/finops"
+	"github.com/puppe1990/aws-finops/internal/models"
 	"github.com/puppe1990/aws-finops/internal/store"
 )
 
@@ -35,21 +37,11 @@ func (s *Syncer) SyncAccount(ctx context.Context, accountID int64) (run storeRun
 		return storeRun{}, err
 	}
 
-	creds := awsinv.Credentials{
-		Mode:        acc.AuthMode,
-		AccessKeyID: acc.AccessKeyID,
-		Region:      acc.Region,
-		AccountID:   acc.AWSAccountID,
+	creds, err := s.credsFor(acc)
+	if err != nil {
+		_ = s.store.FinishSyncRun(runID, finops.SyncFailed, "", "", err.Error())
+		return storeRun{Status: finops.SyncFailed, Error: err.Error()}, err
 	}
-	if acc.AuthMode == finops.AuthModeAccessKeys && acc.SecretCipher != "" && s.decrypt != nil {
-		secret, decErr := s.decrypt(acc.SecretCipher)
-		if decErr != nil {
-			_ = s.store.FinishSyncRun(runID, finops.SyncFailed, "", "", decErr.Error())
-			return storeRun{Status: finops.SyncFailed, Error: decErr.Error()}, decErr
-		}
-		creds.SecretAccessKey = secret
-	}
-
 	inv, err := s.collector.Collect(ctx, creds)
 	if err != nil {
 		_ = s.store.FinishSyncRun(runID, finops.SyncFailed, "", "", err.Error())
@@ -69,6 +61,47 @@ func (s *Syncer) SyncAccount(ctx context.Context, accountID int64) (run storeRun
 		return storeRun{}, err
 	}
 	return storeRun{ID: runID, Status: finops.SyncOK, Source: inv.Source, Warning: warning}, nil
+}
+
+func (s *Syncer) credsFor(acc models.CloudAccount) (awsinv.Credentials, error) {
+	creds := awsinv.Credentials{
+		Mode:        acc.AuthMode,
+		AccessKeyID: acc.AccessKeyID,
+		Region:      acc.Region,
+		AccountID:   acc.AWSAccountID,
+	}
+	if acc.AuthMode == finops.AuthModeAccessKeys && acc.SecretCipher != "" && s.decrypt != nil {
+		secret, err := s.decrypt(acc.SecretCipher)
+		if err != nil {
+			return creds, err
+		}
+		creds.SecretAccessKey = secret
+	}
+	return creds, nil
+}
+
+func (s *Syncer) CostForMonth(ctx context.Context, tenantID int64, period time.Time) ([]models.CostLine, error) {
+	mc, ok := s.collector.(awsinv.MonthCoster)
+	if !ok {
+		return nil, nil
+	}
+	accounts, err := s.store.ListCloudAccounts(tenantID)
+	if err != nil {
+		return nil, err
+	}
+	var all []models.CostLine
+	for _, acc := range accounts {
+		creds, err := s.credsFor(acc)
+		if err != nil {
+			return nil, fmt.Errorf("ce %s: %w", acc.AWSAccountID, err)
+		}
+		lines, err := mc.CostForMonth(ctx, creds, period)
+		if err != nil {
+			return nil, fmt.Errorf("ce %s: %w", acc.AWSAccountID, err)
+		}
+		all = append(all, lines...)
+	}
+	return all, nil
 }
 
 func (s *Syncer) SyncTenant(ctx context.Context, tenantID int64) error {

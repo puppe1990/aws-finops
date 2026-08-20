@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/puppe1990/cais/pkg/cais"
@@ -11,6 +13,7 @@ import (
 	"github.com/puppe1990/cais/pkg/cais/meta"
 	inertia "github.com/romsar/gonertia/v3"
 
+	"github.com/puppe1990/aws-finops/internal/awsinv"
 	"github.com/puppe1990/aws-finops/internal/costest"
 	"github.com/puppe1990/aws-finops/internal/finops"
 	"github.com/puppe1990/aws-finops/internal/models"
@@ -25,6 +28,7 @@ type DashboardHandler struct {
 	cfg      cais.Config
 	inertia  *inertia.Inertia
 	syncer   *syncer.Syncer
+	now      func() time.Time
 }
 
 func NewDashboardHandler(renderer *cais.Renderer, s store.Store, site meta.Site, cfg cais.Config, i *inertia.Inertia) *DashboardHandler {
@@ -49,6 +53,7 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		"budgets":       []any{},
 		"accounts":      []any{},
 		"lastSync":      nil,
+		"flash":         inertia.Flash{},
 	}
 	if msg, ok := flash.MessageFromRequest(r); ok {
 		props["flash"] = inertia.Flash{msg.Kind: msg.Message}
@@ -58,7 +63,14 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.syncer != nil {
+	now := time.Now().UTC()
+	if h.now != nil {
+		now = h.now()
+	}
+	lm := awsinv.ParseLedgerMonth(r.URL.Query().Get("month"), now)
+	cat := requestCatalog(r, h.cfg.Locale)
+
+	if h.syncer != nil && lm.IsCurrent {
 		resources, _ := h.store.ListResourcesForTenant(ws.Tenant.ID)
 		if len(resources) == 0 {
 			ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
@@ -67,10 +79,25 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	var overlay []models.CostLine
+	ceDenied := false
+	if !lm.IsCurrent && h.syncer != nil {
+		ctx, cancel := context.WithTimeout(r.Context(), 25*time.Second)
+		var overlayErr error
+		overlay, overlayErr = h.syncer.CostForMonth(ctx, ws.Tenant.ID, lm.Period)
+		cancel()
+		if overlayErr != nil {
+			if awsinv.IsAccessDenied(overlayErr) {
+				ceDenied = true
+			}
+			overlay = nil
+		}
+	}
+
 	for k, v := range shellProps(h.site, r, h.store, ws) {
 		props[k] = v
 	}
-	view, err := buildTenantView(h.store, ws.Tenant.ID, requestCatalog(r, h.cfg.Locale))
+	view, err := buildTenantView(h.store, ws.Tenant.ID, cat, lm, overlay, ceDenied)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -82,6 +109,11 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	props["budgets"] = view.Budgets
 	props["accounts"] = view.Accounts
 	props["lastSync"] = view.LastSync
+	props["month"] = lm.Query
+	props["monthLabel"] = ledgerMonthLabel(cat, lm)
+	props["prevMonth"] = lm.Prev
+	props["nextMonth"] = lm.Next
+	props["isCurrent"] = lm.IsCurrent
 	_ = h.inertia.Render(w, r, "Dashboard", props)
 }
 
@@ -95,7 +127,7 @@ type tenantView struct {
 	LastSync  map[string]any
 }
 
-func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog) (tenantView, error) {
+func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog, lm awsinv.LedgerMonth, overlay []models.CostLine, ceDenied bool) (tenantView, error) {
 	resources, err := s.ListResourcesForTenant(tenantID)
 	if err != nil {
 		return tenantView{}, err
@@ -113,49 +145,20 @@ func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog) (tenantVi
 		return tenantView{}, err
 	}
 
-	var monthly int64
-	var lines []costest.Line
-	source := finops.SourceEstimate
-	var lastSync map[string]any
-	for _, acc := range accounts {
-		costLines, err := s.ListCostLines(acc.ID)
-		if err != nil {
-			return tenantView{}, err
-		}
-		for _, line := range costLines {
-			monthly += line.MonthlyCents
-			lines = append(lines, costest.Line{Service: line.Service, MonthlyCents: line.MonthlyCents})
-			if line.Source == finops.SourceCE {
-				source = finops.SourceCE
-			}
-		}
-		if run, err := s.LastSyncRun(acc.ID); err == nil && run.ID != 0 {
-			lastSync = map[string]any{
-				"status":  run.Status,
-				"source":  run.Source,
-				"warning": run.Warning,
-				"error":   run.Error,
-				"at":      run.StartedAt.Format(time.RFC3339),
-			}
-		}
+	monthly, costLines, source, err := monthSpend(s, accounts, resources, cat, lm, overlay)
+	if err != nil {
+		return tenantView{}, err
 	}
-	if monthly == 0 {
-		for _, r := range resources {
-			monthly += r.MonthlyCents
-			lines = append(lines, costest.Line{Service: resourceKindLabel(r.Kind, cat), MonthlyCents: r.MonthlyCents})
-		}
-	}
-	now := time.Now()
 	mtd := monthly
-	if source != finops.SourceCE {
-		mtd = costest.MonthToDateCents(monthly, now)
+	if lm.IsCurrent && source != finops.SourceCE {
+		mtd = costest.MonthToDateCents(monthly, time.Now())
 	}
 
-	services := []map[string]any{}
-	for _, g := range costest.GroupByService(lines) {
-		services = append(services, map[string]any{
-			"name": g.Service, "cents": g.MonthlyCents, "usd": formatUSD(g.MonthlyCents),
-		})
+	shownFindings := findings
+	denied := hasFinding(findings, finops.FindingCEDenied)
+	if !lm.IsCurrent {
+		shownFindings = nil
+		denied = ceDenied
 	}
 
 	return tenantView{
@@ -167,15 +170,82 @@ func buildTenantView(s store.Store, tenantID int64, cat *i18n.Catalog) (tenantVi
 			"source":        source,
 			"accountCount":  len(accounts),
 			"resourceCount": len(resources),
-			"ceDenied":      hasFinding(findings, finops.FindingCEDenied),
+			"ceDenied":      denied,
 		},
-		Services:  services,
+		Services:  serviceProps(costLines),
 		Resources: resourceProps(resources, cat),
-		Findings:  findingProps(findings, cat),
+		Findings:  findingProps(shownFindings, cat),
 		Budgets:   budgetProps(budgets, monthly),
 		Accounts:  accountProps(accounts),
-		LastSync:  lastSync,
+		LastSync:  lastSyncProps(s, accounts),
 	}, nil
+}
+
+func monthSpend(s store.Store, accounts []models.CloudAccount, resources []models.CloudResource, cat *i18n.Catalog, lm awsinv.LedgerMonth, overlay []models.CostLine) (int64, []models.CostLine, string, error) {
+	if !lm.IsCurrent {
+		monthly, lines, source := sumCostLines(overlay)
+		return monthly, lines, source, nil
+	}
+	var monthly int64
+	var lines []models.CostLine
+	source := finops.SourceEstimate
+	for _, acc := range accounts {
+		costLines, err := s.ListCostLines(acc.ID)
+		if err != nil {
+			return 0, nil, "", err
+		}
+		m, l, src := sumCostLines(costLines)
+		monthly += m
+		lines = append(lines, l...)
+		if src == finops.SourceCE {
+			source = finops.SourceCE
+		}
+	}
+	if monthly == 0 {
+		for _, r := range resources {
+			monthly += r.MonthlyCents
+			lines = append(lines, models.CostLine{
+				Service: resourceKindLabel(r.Kind, cat), MonthlyCents: r.MonthlyCents, Source: r.Source,
+			})
+		}
+	}
+	return monthly, lines, source, nil
+}
+
+func sumCostLines(costLines []models.CostLine) (monthly int64, lines []models.CostLine, source string) {
+	source = finops.SourceEstimate
+	for _, line := range costLines {
+		monthly += line.MonthlyCents
+		lines = append(lines, line)
+		if line.Source == finops.SourceCE {
+			source = finops.SourceCE
+		}
+	}
+	return monthly, lines, source
+}
+
+func lastSyncProps(s store.Store, accounts []models.CloudAccount) map[string]any {
+	var lastSync map[string]any
+	for _, acc := range accounts {
+		if run, err := s.LastSyncRun(acc.ID); err == nil && run.ID != 0 {
+			lastSync = map[string]any{
+				"status":  run.Status,
+				"source":  run.Source,
+				"warning": run.Warning,
+				"error":   run.Error,
+				"at":      run.StartedAt.Format(time.RFC3339),
+			}
+		}
+	}
+	return lastSync
+}
+
+func ledgerMonthLabel(cat *i18n.Catalog, lm awsinv.LedgerMonth) string {
+	name := cat.T(awsinv.MonthLabelKey(lm.Period))
+	label := cat.T("dash.month_fmt")
+	label = strings.Replace(label, "%s", name, 1)
+	label = strings.Replace(label, "%d", strconv.Itoa(lm.Period.Year()), 1)
+	return label
 }
 
 func resourceProps(resources []models.CloudResource, cat *i18n.Catalog) []map[string]any {
