@@ -21,6 +21,11 @@
   export let totalContacts = 0
   export let labels = {}
   export let locale = 'en'
+  export let month = ''
+  export let monthLabel = ''
+  export let prevMonth = ''
+  export let nextMonth = ''
+  export let isCurrent = true
 
   function syncNow() {
     router.post('/sync')
@@ -39,7 +44,15 @@
 <AppLayout {site} {flash} {tenant} {tenants} {userEmail} {labels} {locale}>
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <p class="font-mono text-[11px] uppercase tracking-[0.3em] text-copper-400">{t(labels, 'dash.month')}</p>
+      <div class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.3em] text-copper-400">
+        {#if prevMonth}
+          <a href="/dashboard?month={prevMonth}" use:inertia class="text-copper-400 hover:text-paper-50" aria-label={prevMonth}>‹</a>
+        {/if}
+        <span>{monthLabel || t(labels, 'dash.month')}</span>
+        {#if nextMonth}
+          <a href="/dashboard?month={nextMonth}" use:inertia class="text-copper-400 hover:text-paper-50" aria-label={nextMonth}>›</a>
+        {/if}
+      </div>
       <h2 class="mt-1 font-display text-4xl">{t(labels, 'dashboard.title')}</h2>
     </div>
     <button
@@ -58,7 +71,7 @@
     </p>
     <p class="mt-3 font-mono text-xs text-paper-200">
       {sourceLabel}
-      {#if summary.source !== 'ce' && summary.mtdUSD}
+      {#if isCurrent && summary.source !== 'ce' && summary.mtdUSD}
         <span> · {t(labels, 'dash.mtd')} {summary.mtdUSD}</span>
       {/if}
       {#if accountId}

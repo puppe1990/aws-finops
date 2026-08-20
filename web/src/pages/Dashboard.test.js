@@ -71,4 +71,44 @@ describe('Dashboard ledger', () => {
     render(Dashboard, { props: baseProps() })
     expect(screen.queryByText(/Month-to-date/)).not.toBeInTheDocument()
   })
+
+  it('renders prev month link and omits next when current', () => {
+    render(Dashboard, {
+      props: baseProps({
+        monthLabel: 'Aug 2026',
+        prevMonth: '2026-07',
+        nextMonth: '',
+        isCurrent: true,
+      }),
+    })
+    const prev = document.querySelector('a[href="/dashboard?month=2026-07"]')
+    expect(prev).toBeTruthy()
+    expect(document.querySelector('a[href="/dashboard?month=2026-09"]')).toBeNull()
+    expect(screen.queryByText(/Month-to-date/)).not.toBeInTheDocument()
+  })
+
+  it('renders next month link when viewing the past', () => {
+    render(Dashboard, {
+      props: baseProps({
+        monthLabel: 'Jul 2026',
+        prevMonth: '2026-06',
+        nextMonth: '2026-08',
+        isCurrent: false,
+      }),
+    })
+    expect(document.querySelector('a[href="/dashboard?month=2026-08"]')).toBeTruthy()
+  })
+
+  it('hides month-to-date on a past month even if source is estimate', () => {
+    render(Dashboard, {
+      props: baseProps({
+        isCurrent: false,
+        summary: { monthlyUSD: 'US$ 0,00', source: 'estimate', ceDenied: true, mtdUSD: 'US$ 7,35' },
+        monthLabel: 'Jul 2026',
+        prevMonth: '2026-06',
+        nextMonth: '2026-08',
+      }),
+    })
+    expect(screen.queryByText(/Month-to-date/)).not.toBeInTheDocument()
+  })
 })
