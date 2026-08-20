@@ -25,6 +25,17 @@ func TestLabels_dashboardBudgetLine(t *testing.T) {
 	}
 }
 
+func TestLabels_ledgerMonthKeys(t *testing.T) {
+	en := Labels("en")
+	pt := Labels("pt-BR")
+	if en["dash.month_fmt"] != "%s %d" || pt["dash.month_fmt"] != "%s %d" {
+		t.Fatalf("month_fmt en=%q pt=%q", en["dash.month_fmt"], pt["dash.month_fmt"])
+	}
+	if en["dash.m08"] != "Aug" || pt["dash.m08"] != "ago" {
+		t.Fatalf("m08 en=%q pt=%q", en["dash.m08"], pt["dash.m08"])
+	}
+}
+
 func TestLabels_sameKeysEnAndPt(t *testing.T) {
 	en := Labels("en")
 	pt := Labels("pt-BR")
