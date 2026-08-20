@@ -39,7 +39,7 @@ func (l *Live) Collect(ctx context.Context, creds Credentials) (Inventory, error
 		creds.AccountID = id
 	}
 
-	ceLines, ceErr := collectCostExplorer(ctx, cfg)
+	ceLines, ceErr := collectCostExplorer(ctx, cfg, time.Now().UTC())
 	ceDenied := ceErr != nil && IsAccessDenied(ceErr)
 	if ceErr != nil {
 		inv.Warnings = append(inv.Warnings, "ce: "+ceErr.Error())
@@ -91,8 +91,18 @@ func callerAccount(ctx context.Context, cfg aws.Config) (string, error) {
 	return aws.ToString(out.Account), nil
 }
 
-func collectCostExplorer(ctx context.Context, cfg aws.Config) ([]models.CostLine, error) {
-	start, end := monthBounds(time.Now().UTC())
+func (l *Live) CostForMonth(ctx context.Context, creds Credentials, period time.Time) ([]models.CostLine, error) {
+	cfg, err := loadAWS(ctx, creds)
+	if err != nil {
+		return nil, err
+	}
+	return collectCostExplorer(ctx, cfg, period)
+}
+
+var _ MonthCoster = (*Live)(nil)
+
+func collectCostExplorer(ctx context.Context, cfg aws.Config, period time.Time) ([]models.CostLine, error) {
+	start, end := MonthBounds(period)
 	out, err := costexplorer.NewFromConfig(cfg).GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
 		TimePeriod: &cetypes.DateInterval{
 			Start: aws.String(start),
