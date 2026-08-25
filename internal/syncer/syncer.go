@@ -104,6 +104,30 @@ func (s *Syncer) CostForMonth(ctx context.Context, tenantID int64, period time.T
 	return all, nil
 }
 
+func (s *Syncer) ForecastForMonth(ctx context.Context, tenantID int64, period time.Time) (int64, error) {
+	fc, ok := s.collector.(awsinv.CostForecaster)
+	if !ok {
+		return 0, nil
+	}
+	accounts, err := s.store.ListCloudAccounts(tenantID)
+	if err != nil {
+		return 0, err
+	}
+	var total int64
+	for _, acc := range accounts {
+		creds, err := s.credsFor(acc)
+		if err != nil {
+			return 0, fmt.Errorf("forecast %s: %w", acc.AWSAccountID, err)
+		}
+		cents, err := fc.ForecastForMonth(ctx, creds, period)
+		if err != nil {
+			return 0, fmt.Errorf("forecast %s: %w", acc.AWSAccountID, err)
+		}
+		total += cents
+	}
+	return total, nil
+}
+
 func (s *Syncer) SyncTenant(ctx context.Context, tenantID int64) error {
 	accounts, err := s.store.ListCloudAccounts(tenantID)
 	if err != nil {

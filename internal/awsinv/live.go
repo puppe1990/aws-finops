@@ -98,7 +98,16 @@ func (l *Live) CostForMonth(ctx context.Context, creds Credentials, period time.
 	return collectCostExplorer(ctx, cfg, period)
 }
 
+func (l *Live) ForecastForMonth(ctx context.Context, creds Credentials, period time.Time) (int64, error) {
+	cfg, err := loadAWS(ctx, creds)
+	if err != nil {
+		return 0, err
+	}
+	return collectCostForecast(ctx, cfg, period, time.Now().UTC())
+}
+
 var _ MonthCoster = (*Live)(nil)
+var _ CostForecaster = (*Live)(nil)
 
 func collectCostExplorer(ctx context.Context, cfg aws.Config, period time.Time) ([]models.CostLine, error) {
 	start, end := MonthBounds(period)
@@ -129,6 +138,34 @@ func collectCostExplorer(ctx context.Context, cfg aws.Config, period time.Time) 
 		}
 	}
 	return lines, nil
+}
+
+func collectCostForecast(ctx context.Context, cfg aws.Config, period, now time.Time) (int64, error) {
+	monthStart, monthEnd := MonthBounds(period)
+	out, err := costexplorer.NewFromConfig(cfg).GetCostForecast(ctx, &costexplorer.GetCostForecastInput{
+		TimePeriod: &cetypes.DateInterval{
+			Start: aws.String(ForecastAPIStart(monthStart, now)),
+			End:   aws.String(monthEnd),
+		},
+		Granularity: cetypes.GranularityMonthly,
+		Metric:      cetypes.MetricUnblendedCost,
+	})
+	if err != nil {
+		return 0, err
+	}
+	buckets := make([]ForecastBucket, 0, len(out.ForecastResultsByTime))
+	for _, r := range out.ForecastResultsByTime {
+		start := ""
+		if r.TimePeriod != nil {
+			start = aws.ToString(r.TimePeriod.Start)
+		}
+		buckets = append(buckets, ForecastBucket{Start: start, Amount: aws.ToString(r.MeanValue)})
+	}
+	total := ""
+	if out.Total != nil {
+		total = aws.ToString(out.Total.Amount)
+	}
+	return ForecastCentsForPeriod(monthStart, buckets, total), nil
 }
 
 func lightsailCatalog(ctx context.Context, cfg aws.Config) (map[string]int64, error) {

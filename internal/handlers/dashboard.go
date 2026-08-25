@@ -102,6 +102,9 @@ func (h *DashboardHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if lm.IsCurrent && h.syncer != nil {
+		attachForecast(r.Context(), h.syncer, ws.Tenant.ID, now, cat, view.Summary)
+	}
 	props["summary"] = view.Summary
 	props["services"] = view.Services
 	props["resources"] = view.Resources
@@ -238,6 +241,18 @@ func lastSyncProps(s store.Store, accounts []models.CloudAccount) map[string]any
 		}
 	}
 	return lastSync
+}
+
+func attachForecast(ctx context.Context, syn *syncer.Syncer, tenantID int64, now time.Time, cat *i18n.Catalog, summary map[string]any) {
+	period := awsinv.NextMonth(now)
+	ctx, cancel := context.WithTimeout(ctx, 25*time.Second)
+	defer cancel()
+	cents, err := syn.ForecastForMonth(ctx, tenantID, period)
+	if err != nil || cents <= 0 {
+		return
+	}
+	summary["forecastUSD"] = formatUSD(cents)
+	summary["forecastLabel"] = ledgerMonthLabel(cat, awsinv.LedgerMonth{Period: period})
 }
 
 func ledgerMonthLabel(cat *i18n.Catalog, lm awsinv.LedgerMonth) string {

@@ -87,6 +87,11 @@
         </span>
       {/if}
     </p>
+    {#if isCurrent && summary.forecastUSD}
+      <p class="mt-2 font-mono text-xs text-copper-400" data-forecast>
+        {tf(labels, 'dash.forecast', summary.forecastLabel, summary.forecastUSD)}
+      </p>
+    {/if}
     {#each budgets as b}
       <p class="mt-2 font-mono text-xs text-paper-200">
         {tf(labels, 'dash.budget_line', b.name, burnPercent(b.burnBps), b.spent, b.amount)}

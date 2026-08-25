@@ -94,6 +94,7 @@ var enMessages = map[string]string{
 	"dash.findings":          "Findings",
 	"dash.no_findings":       "No findings in this workspace.",
 	"dash.budget_line":       "%s · burn %s · %s / %s",
+	"dash.forecast":          "Forecast %s · %s",
 	"dash.col_resource":      "Resource",
 	"dash.col_type":          "Type",
 	"dash.col_region":        "Region",

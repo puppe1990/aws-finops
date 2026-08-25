@@ -22,6 +22,21 @@ func MonthBounds(t time.Time) (string, string) {
 	return start.Format("2006-01-02"), start.AddDate(0, 1, 0).Format("2006-01-02")
 }
 
+func NextMonth(t time.Time) time.Time {
+	t = t.UTC()
+	start := time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+	return start.AddDate(0, 1, 0)
+}
+
+// GetCostForecast rejects a start date after today; clamp next-month bounds to today.
+func ForecastAPIStart(monthStart string, today time.Time) string {
+	day := today.UTC().Format("2006-01-02")
+	if monthStart > day {
+		return day
+	}
+	return monthStart
+}
+
 func MonthLabelKey(t time.Time) string {
 	return fmt.Sprintf("dash.m%02d", int(t.UTC().Month()))
 }

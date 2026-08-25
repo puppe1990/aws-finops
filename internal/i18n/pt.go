@@ -94,6 +94,7 @@ var ptMessages = map[string]string{
 	"dash.findings":          "Achados",
 	"dash.no_findings":       "Nenhum achado neste workspace.",
 	"dash.budget_line":       "%s · queima %s · %s / %s",
+	"dash.forecast":          "Previsão %s · %s",
 	"dash.col_resource":      "Recurso",
 	"dash.col_type":          "Tipo",
 	"dash.col_region":        "Região",

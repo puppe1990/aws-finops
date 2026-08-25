@@ -46,3 +46,27 @@ func TestMonthLabelKey(t *testing.T) {
 		t.Fatal(MonthLabelKey(time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)))
 	}
 }
+
+func TestNextMonth(t *testing.T) {
+	got := NextMonth(time.Date(2026, 8, 24, 15, 4, 0, 0, time.UTC))
+	want := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	if !got.Equal(want) {
+		t.Fatalf("aug = %v want %v", got, want)
+	}
+
+	got = NextMonth(time.Date(2026, 12, 31, 23, 0, 0, 0, time.UTC))
+	want = time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)
+	if !got.Equal(want) {
+		t.Fatalf("dec = %v want %v", got, want)
+	}
+}
+
+func TestForecastAPIStart_clampsFutureMonthToToday(t *testing.T) {
+	today := time.Date(2026, 8, 24, 15, 0, 0, 0, time.UTC)
+	if got := ForecastAPIStart("2026-09-01", today); got != "2026-08-24" {
+		t.Fatalf("next month start = %s", got)
+	}
+	if got := ForecastAPIStart("2026-08-01", today); got != "2026-08-01" {
+		t.Fatalf("current month start = %s", got)
+	}
+}

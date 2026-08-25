@@ -50,3 +50,55 @@ func TestSyncer_CostForMonth_doesNotWriteCostLines(t *testing.T) {
 		t.Fatalf("sqlite mutated: %#v", stored)
 	}
 }
+
+type stubForecastCollector struct {
+	stubCollector
+	cents  int64
+	period time.Time
+}
+
+func (s *stubForecastCollector) ForecastForMonth(_ context.Context, _ awsinv.Credentials, period time.Time) (int64, error) {
+	s.period = period
+	return s.cents, nil
+}
+
+func TestSyncer_ForecastForMonth_sumsAccounts(t *testing.T) {
+	s, err := store.NewSQLiteStore(":memory:", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	tid, _ := s.CreateTenant("Demo", "demo")
+	_, _ = s.CreateCloudAccount(models.CloudAccount{
+		TenantID: tid, AWSAccountID: "111111111111", Alias: "a",
+		Region: "us-east-1", AuthMode: finops.AuthModeDefaultChain,
+	})
+	_, _ = s.CreateCloudAccount(models.CloudAccount{
+		TenantID: tid, AWSAccountID: "222222222222", Alias: "b",
+		Region: "us-east-1", AuthMode: finops.AuthModeDefaultChain,
+	})
+
+	col := &stubForecastCollector{cents: 1000}
+	sept := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	got, err := New(s, col).ForecastForMonth(context.Background(), tid, sept)
+	if err != nil || got != 2000 {
+		t.Fatalf("got=%d err=%v", got, err)
+	}
+	if !col.period.Equal(sept) {
+		t.Fatalf("period=%v", col.period)
+	}
+}
+
+func TestSyncer_ForecastForMonth_withoutForecaster(t *testing.T) {
+	s, err := store.NewSQLiteStore(":memory:", "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+	tid, _ := s.CreateTenant("Demo", "demo")
+	got, err := New(s, stubCollector{}).ForecastForMonth(
+		context.Background(), tid, time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC))
+	if err != nil || got != 0 {
+		t.Fatalf("got=%d err=%v", got, err)
+	}
+}
