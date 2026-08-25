@@ -41,6 +41,7 @@ type Store interface {
 
 	CreateCloudAccount(acc models.CloudAccount) (int64, error)
 	EnsureCloudAccount(acc models.CloudAccount) (int64, error)
+	UpdateCloudAccountAuth(acc models.CloudAccount) error
 	FindCloudAccount(id int64) (models.CloudAccount, error)
 	FindCloudAccountForTenant(tenantID, id int64) (models.CloudAccount, error)
 	ListCloudAccounts(tenantID int64) ([]models.CloudAccount, error)

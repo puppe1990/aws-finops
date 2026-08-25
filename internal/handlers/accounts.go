@@ -122,6 +122,12 @@ func (h *AccountsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	if acc.AuthMode == finops.AuthModeAccessKeys {
+		if err := h.store.UpdateCloudAccountAuth(acc); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
 	flash.Set(w, "notice", requestCatalog(r, h.cfg.Locale).T("acc.linked"), h.cfg.CookieSecure())
 	h.inertia.Redirect(w, r, "/accounts", http.StatusSeeOther)
 }
