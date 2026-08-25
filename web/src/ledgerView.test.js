@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { spendRows, topFindings, findingHref, primaryAccountId, burnPercent } from './ledgerView.js'
+import {
+  spendRows,
+  topFindings,
+  findingHref,
+  primaryAccountId,
+  burnPercent,
+  shortSync,
+  usageLabel,
+} from './ledgerView.js'
 
 describe('spendRows', () => {
   it('drops zero-cent services and sizes bars against the largest remaining', () => {
@@ -58,5 +66,17 @@ describe('primaryAccountId', () => {
 describe('burnPercent', () => {
   it('renders basis points as a percent', () => {
     expect(burnPercent(6400)).toBe('64%')
+  })
+})
+
+describe('shortSync', () => {
+  it('keeps the calendar day of an RFC3339 stamp', () => {
+    expect(shortSync('2026-08-19T22:33:21Z')).toBe('2026-08-19')
+  })
+})
+
+describe('usageLabel', () => {
+  it('strips the AWS region prefix from a usage type', () => {
+    expect(usageLabel('USE1-BundleUsage:2GB')).toBe('BundleUsage:2GB')
   })
 })

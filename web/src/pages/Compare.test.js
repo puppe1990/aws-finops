@@ -13,6 +13,7 @@ const labels = {
   'cmp.title': 'Month compare',
   'cmp.by_month': 'By month',
   'cmp.services': 'This month vs last',
+  'cmp.by_service': 'By service',
   'cmp.empty': 'No months yet.',
   'cmp.mom': 'vs previous month',
   'nav.ledger': 'Ledger',
@@ -41,7 +42,16 @@ describe('Compare page', () => {
           { query: '2026-07', label: 'Jul 2026', usd: 'US$ 32,20', cents: 3220 },
         ],
         services: [
-          { name: 'Amazon Lightsail', currentUSD: 'US$ 19,83', previousUSD: 'US$ 32,20', deltaBps: -3848 },
+          {
+            name: 'Amazon Lightsail',
+            currentUSD: 'US$ 19,83',
+            previousUSD: 'US$ 32,20',
+            deltaBps: -3848,
+            months: [
+              { query: '2026-07', cents: 3220, usd: 'US$ 32,20', pct: 100 },
+              { query: '2026-08', cents: 1983, usd: 'US$ 19,83', pct: 62 },
+            ],
+          },
         ],
         site: { appName: 'Cifra' },
       },
@@ -51,5 +61,6 @@ describe('Compare page', () => {
     expect(screen.getAllByText('US$ 19,83').length).toBeGreaterThan(0)
     expect(document.querySelector('a[href="/dashboard?month=2026-07"]')).toBeTruthy()
     expect(screen.getByText('Amazon Lightsail')).toBeInTheDocument()
+    expect(document.querySelectorAll('[data-testid="service-month-bar"]').length).toBe(2)
   })
 })

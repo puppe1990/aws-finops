@@ -70,4 +70,12 @@ func TestCompareHandler_monthlyRowsFromCostExplorer(t *testing.T) {
 	if svc["name"] != "Amazon Lightsail" || svc["currentUSD"] != "US$ 19,83" {
 		t.Fatalf("service=%v", svc)
 	}
+	series, _ := svc["months"].([]any)
+	if len(series) < 2 {
+		t.Fatalf("service months=%d", len(series))
+	}
+	firstMonth := series[0].(map[string]any)
+	if firstMonth["query"] != "2026-07" {
+		t.Fatalf("first service month=%v", firstMonth)
+	}
 }

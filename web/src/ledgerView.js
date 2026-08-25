@@ -23,3 +23,12 @@ export function primaryAccountId(accounts) {
 export function burnPercent(bps) {
   return `${Math.round((Number(bps) || 0) / 100)}%`
 }
+
+export function shortSync(at) {
+  const s = String(at || '')
+  return s.length >= 10 ? s.slice(0, 10) : s
+}
+
+export function usageLabel(name) {
+  return String(name || '').replace(/^[A-Z]{2,4}\d-/, '')
+}

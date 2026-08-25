@@ -75,19 +75,12 @@ func (h *CompareHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	buckets := awsinv.FoldMonthlyLines(from, to, lines)
-	var current, previous []models.CostLine
-	if n := len(buckets); n > 0 {
-		current = buckets[n-1].Lines
-		if n > 1 {
-			previous = buckets[n-2].Lines
-		}
-	}
 
 	for k, v := range shellProps(h.site, r, h.store, ws) {
 		props[k] = v
 	}
 	props["months"] = compareMonthRows(buckets, cat, now)
-	props["services"] = compareServiceRows(current, previous)
+	props["services"] = compareServiceHistory(buckets)
 	props["ceDenied"] = ceDenied
 	_ = h.inertia.Render(w, r, "Compare", props)
 }

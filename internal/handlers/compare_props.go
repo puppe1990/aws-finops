@@ -41,6 +41,113 @@ func compareMonthRows(months []awsinv.MonthCost, cat *i18n.Catalog, now time.Tim
 	return out
 }
 
+func monthHasSpend(m awsinv.MonthCost) bool {
+	if m.Cents > 0 {
+		return true
+	}
+	for _, line := range m.Lines {
+		if line.MonthlyCents > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func trimLeadingEmptyMonths(months []awsinv.MonthCost) []awsinv.MonthCost {
+	i := 0
+	for i < len(months) && !monthHasSpend(months[i]) {
+		i++
+	}
+	return months[i:]
+}
+
+func compareServiceHistory(months []awsinv.MonthCost) []map[string]any {
+	months = trimLeadingEmptyMonths(months)
+	names := map[string]bool{}
+	for _, m := range months {
+		for _, line := range m.Lines {
+			if line.Service != "" {
+				names[line.Service] = true
+			}
+		}
+	}
+	n := len(months)
+	list := make([]string, 0, len(names))
+	for name := range names {
+		list = append(list, name)
+	}
+	currIdx := n - 1
+	sort.Slice(list, func(i, j int) bool {
+		ci, cj := serviceMonthCents(months, currIdx, list[i]), serviceMonthCents(months, currIdx, list[j])
+		if ci == cj {
+			return list[i] < list[j]
+		}
+		return ci > cj
+	})
+	out := make([]map[string]any, 0, len(list))
+	for _, name := range list {
+		cells := make([]map[string]any, 0, n)
+		var peak, total int64
+		for i := range months {
+			cents := serviceMonthCents(months, i, name)
+			total += cents
+			if cents > peak {
+				peak = cents
+			}
+		}
+		if peak == 0 {
+			continue
+		}
+		for i, m := range months {
+			cents := serviceMonthCents(months, i, name)
+			pct := 0
+			if peak > 0 {
+				pct = int(cents * 100 / peak)
+			}
+			cells = append(cells, map[string]any{
+				"query": m.Query,
+				"cents": cents,
+				"usd":   formatUSD(cents),
+				"pct":   pct,
+			})
+		}
+		current, previous := int64(0), int64(0)
+		if n > 0 {
+			current = serviceMonthCents(months, n-1, name)
+		}
+		if n > 1 {
+			previous = serviceMonthCents(months, n-2, name)
+		}
+		row := map[string]any{
+			"name":          name,
+			"months":        cells,
+			"totalUSD":      formatUSD(total),
+			"currentCents":  current,
+			"previousCents": previous,
+			"currentUSD":    formatUSD(current),
+			"previousUSD":   formatUSD(previous),
+		}
+		if bps, ok := MonthDeltaBps(current, previous); ok {
+			row["deltaBps"] = bps
+		}
+		out = append(out, row)
+	}
+	return out
+}
+
+func serviceMonthCents(months []awsinv.MonthCost, i int, name string) int64 {
+	if i < 0 || i >= len(months) {
+		return 0
+	}
+	var sum int64
+	for _, line := range months[i].Lines {
+		if line.Service == name {
+			sum += line.MonthlyCents
+		}
+	}
+	return sum
+}
+
 func compareServiceRows(current, previous []models.CostLine) []map[string]any {
 	curr := serviceSums(current)
 	prev := serviceSums(previous)
