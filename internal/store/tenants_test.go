@@ -103,3 +103,43 @@ func TestStore_EnsureCloudAccount_updatesExisting(t *testing.T) {
 		t.Fatalf("accounts = %d, want 1", len(accounts))
 	}
 }
+
+func TestStore_UpdateCloudAccountAuth_switchesToAccessKeys(t *testing.T) {
+	s := newTestStore(t)
+	tid, err := s.CreateTenant("Demo", "demo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, err := s.EnsureCloudAccount(models.CloudAccount{
+		TenantID:     tid,
+		AWSAccountID: "111111111111",
+		Alias:        "principal",
+		Region:       "us-east-1",
+		AuthMode:     finops.AuthModeDefaultChain,
+		IsPrimary:    true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := s.UpdateCloudAccountAuth(models.CloudAccount{
+		TenantID:     tid,
+		AWSAccountID: "111111111111",
+		Alias:        "principal",
+		Region:       "us-east-1",
+		AuthMode:     finops.AuthModeAccessKeys,
+		AccessKeyID:  "AKIATEST",
+		SecretCipher: "cipher",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	acc, err := s.FindCloudAccount(id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if acc.AuthMode != finops.AuthModeAccessKeys {
+		t.Fatalf("auth_mode = %q, want access_keys", acc.AuthMode)
+	}
+	if acc.AccessKeyID != "AKIATEST" || acc.SecretCipher != "cipher" {
+		t.Fatalf("keys = %q / %q", acc.AccessKeyID, acc.SecretCipher)
+	}
+}

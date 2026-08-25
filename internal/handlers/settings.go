@@ -29,6 +29,7 @@ func (h *SettingsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	props := shellProps(h.site, r, h.store, ws)
 	props["policy"] = awsinv.FinOpsIAMPolicy
+	props["cloudShell"] = awsinv.CloudShellCommand()
 	props["seededAccount"] = finops.SeedAWSAccountID()
 	_ = h.inertia.Render(w, r, "Settings", props)
 }

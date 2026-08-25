@@ -36,6 +36,27 @@ func (s *SQLiteStore) EnsureCloudAccount(acc models.CloudAccount) (int64, error)
 	return s.CreateCloudAccount(acc)
 }
 
+func (s *SQLiteStore) UpdateCloudAccountAuth(acc models.CloudAccount) error {
+	res, err := s.db.Exec(
+		`UPDATE cloud_accounts
+         SET alias = ?, region = ?, auth_mode = ?, access_key_id = ?, secret_cipher = ?
+         WHERE tenant_id = ? AND aws_account_id = ?`,
+		acc.Alias, acc.Region, acc.AuthMode, acc.AccessKeyID, acc.SecretCipher,
+		acc.TenantID, acc.AWSAccountID,
+	)
+	if err != nil {
+		return fmt.Errorf("update cloud account auth: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("update cloud account auth: %w", err)
+	}
+	if n == 0 {
+		return fmt.Errorf("update cloud account auth: not found")
+	}
+	return nil
+}
+
 func (s *SQLiteStore) FindCloudAccount(id int64) (models.CloudAccount, error) {
 	return s.scanCloudAccount(
 		s.db.QueryRow(`SELECT id, tenant_id, aws_account_id, alias, region, auth_mode,

@@ -1,5 +1,14 @@
 package awsinv
 
+import (
+	"bytes"
+	"encoding/json"
+	"strings"
+)
+
+const FinOpsPolicyName = "CifraFinOpsRead"
+const FinOpsIAMUser = "cifra-finops"
+
 const FinOpsIAMPolicy = `{
   "Version": "2012-10-17",
   "Statement": [
@@ -35,3 +44,18 @@ const FinOpsIAMPolicy = `{
     }
   ]
 }`
+
+func CompactIAMPolicy() string {
+	var buf bytes.Buffer
+	if err := json.Compact(&buf, []byte(FinOpsIAMPolicy)); err != nil {
+		return FinOpsIAMPolicy
+	}
+	return buf.String()
+}
+
+func CloudShellCommand() string {
+	cmd := `DOC='{{DOC}}'; ARN=$(aws sts get-caller-identity --query Arn --output text); case "$ARN" in *:user/*) aws iam put-user-policy --user-name "${ARN##*/}" --policy-name {{POLICY}} --policy-document "$DOC" && echo "OK: {{POLICY}} applied to IAM user ${ARN##*/}";; *:assumed-role/*) aws iam put-role-policy --role-name "$(echo "$ARN"|cut -d/ -f2)" --policy-name {{POLICY}} --policy-document "$DOC" && echo "OK: {{POLICY}} applied to role $(echo "$ARN"|cut -d/ -f2)";; *:root) aws iam create-user --user-name {{USER}} >/dev/null 2>&1 || true; aws iam put-user-policy --user-name {{USER}} --policy-name {{POLICY}} --policy-document "$DOC"; echo "CloudShell is account root — IAM policies cannot be attached to root. Applied {{POLICY}} to IAM user {{USER}}. Paste this user's access keys in Cifra → Accounts (never use root keys)."; aws iam create-access-key --user-name {{USER}} || echo "User {{USER}} already has access keys. Rotate in IAM if you lost the secret.";; *) echo "Cannot attach FinOps policy to $ARN. Sign in as an IAM user or role, or as account root (creates IAM user {{USER}})."; false;; esac`
+	cmd = strings.ReplaceAll(cmd, "{{DOC}}", CompactIAMPolicy())
+	cmd = strings.ReplaceAll(cmd, "{{POLICY}}", FinOpsPolicyName)
+	return strings.ReplaceAll(cmd, "{{USER}}", FinOpsIAMUser)
+}
