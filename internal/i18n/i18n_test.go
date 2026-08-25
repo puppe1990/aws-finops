@@ -25,6 +25,17 @@ func TestLabels_dashboardBudgetLine(t *testing.T) {
 	}
 }
 
+func TestLabels_forecastLine(t *testing.T) {
+	en := Labels("en")
+	pt := Labels("pt-BR")
+	if en["dash.forecast"] != "Forecast %s · %s" {
+		t.Fatalf("en=%q", en["dash.forecast"])
+	}
+	if pt["dash.forecast"] != "Previsão %s · %s" {
+		t.Fatalf("pt=%q", pt["dash.forecast"])
+	}
+}
+
 func TestLabels_ledgerMonthKeys(t *testing.T) {
 	en := Labels("en")
 	pt := Labels("pt-BR")

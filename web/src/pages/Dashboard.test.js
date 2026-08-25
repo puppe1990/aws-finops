@@ -21,6 +21,7 @@ const labels = {
   'dash.nothing_synced': 'Nothing synced yet.',
   'dash.findings': 'Findings',
   'dash.budget_line': '%s · burn %s · %s / %s',
+  'dash.forecast': 'Forecast %s · %s',
   'dash.last_sync': 'Last sync',
   'nav.settings': 'IAM & sync',
   'res.title': 'Inventory',
@@ -97,6 +98,45 @@ describe('Dashboard ledger', () => {
       }),
     })
     expect(document.querySelector('a[href="/dashboard?month=2026-08"]')).toBeTruthy()
+  })
+
+  it('shows next-month forecast on the current month', () => {
+    render(Dashboard, {
+      props: baseProps({
+        isCurrent: true,
+        monthLabel: 'Aug 2026',
+        prevMonth: '2026-07',
+        nextMonth: '',
+        summary: {
+          monthlyUSD: 'US$ 32,15',
+          source: 'ce',
+          ceDenied: false,
+          mtdUSD: 'US$ 32,15',
+          forecastUSD: 'US$ 38,50',
+          forecastLabel: 'Sep 2026',
+        },
+      }),
+    })
+    expect(screen.getByText('Forecast Sep 2026 · US$ 38,50')).toBeInTheDocument()
+  })
+
+  it('hides forecast on a past month', () => {
+    render(Dashboard, {
+      props: baseProps({
+        isCurrent: false,
+        monthLabel: 'Jul 2026',
+        prevMonth: '2026-06',
+        nextMonth: '2026-08',
+        summary: {
+          monthlyUSD: 'US$ 19,47',
+          source: 'ce',
+          ceDenied: false,
+          forecastUSD: 'US$ 38,50',
+          forecastLabel: 'Sep 2026',
+        },
+      }),
+    })
+    expect(screen.queryByText(/Forecast/)).not.toBeInTheDocument()
   })
 
   it('hides month-to-date on a past month even if source is estimate', () => {
