@@ -1,4 +1,4 @@
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 const CACHE = "cais-static-v" + CACHE_VERSION;
 
 const PRECACHE = [
@@ -11,6 +11,7 @@ const PRECACHE = [
   "/static/js/html5-qrcode.min.js",
   "/static/js/scan.js",
   "/static/manifest.webmanifest",
+  "/static/icons/favicon.svg",
   "/static/icons/icon-192.png",
   "/static/icons/icon-512.png",
   "/static/offline.html",

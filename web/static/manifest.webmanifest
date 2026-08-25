@@ -1,11 +1,11 @@
 {
-  "name": "aws-finops",
-  "short_name": "aws-finops",
-  "description": "aws-finops — powered by Cais",
+  "name": "Cifra",
+  "short_name": "Cifra",
+  "description": "The AWS ledger",
   "start_url": "/",
-  "display": "fullscreen",
-  "background_color": "#f8fafc",
-  "theme_color": "#4f46e5",
+  "display": "standalone",
+  "background_color": "#0B100E",
+  "theme_color": "#121816",
   "orientation": "portrait-primary",
   "icons": [
     {

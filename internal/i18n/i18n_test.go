@@ -25,6 +25,28 @@ func TestLabels_dashboardBudgetLine(t *testing.T) {
 	}
 }
 
+func TestLabels_compareKeys(t *testing.T) {
+	en := Labels("en")
+	pt := Labels("pt-BR")
+	if en["nav.compare"] != "Compare" || pt["nav.compare"] != "Comparativo" {
+		t.Fatalf("nav.compare en=%q pt=%q", en["nav.compare"], pt["nav.compare"])
+	}
+	if en["cmp.title"] == "" || pt["cmp.title"] == "" {
+		t.Fatal("missing cmp.title")
+	}
+}
+
+func TestLabels_anomaliesKeys(t *testing.T) {
+	en := Labels("en")
+	pt := Labels("pt-BR")
+	if en["nav.anomalies"] != "Anomalies" || pt["nav.anomalies"] != "Anomalias" {
+		t.Fatalf("nav.anomalies en=%q pt=%q", en["nav.anomalies"], pt["nav.anomalies"])
+	}
+	if en["ano.spike"] != "Spend spike" || pt["ano.spike"] != "Salto de gasto" {
+		t.Fatalf("ano.spike en=%q pt=%q", en["ano.spike"], pt["ano.spike"])
+	}
+}
+
 func TestLabels_forecastLine(t *testing.T) {
 	en := Labels("en")
 	pt := Labels("pt-BR")

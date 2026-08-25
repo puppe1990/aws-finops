@@ -59,6 +59,8 @@ var enMessages = map[string]string{
 	"layout.footer": "Running light on Lightsail",
 
 	"nav.ledger":    "Ledger",
+	"nav.compare":   "Compare",
+	"nav.anomalies": "Anomalies",
 	"nav.resources": "Resources",
 	"nav.accounts":  "AWS accounts",
 	"nav.budgets":   "Budgets",
@@ -116,6 +118,18 @@ var enMessages = map[string]string{
 	"dash.m10":               "Oct",
 	"dash.m11":               "Nov",
 	"dash.m12":               "Dec",
+
+	"cmp.title":    "Month compare",
+	"cmp.by_month": "By month",
+	"cmp.services": "This month vs last",
+	"cmp.empty":    "No Cost Explorer months yet.",
+	"cmp.mom":      "vs previous month",
+
+	"ano.title":  "Anomalies",
+	"ano.empty":  "No anomalies in this window.",
+	"ano.ce":     "Cost Explorer",
+	"ano.spike":  "Spend spike",
+	"ano.impact": "Impact",
 
 	"res.title":          "Inventory",
 	"res.lead":           "Everything Cifra can see with the current IAM, isolated to this workspace.",

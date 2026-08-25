@@ -28,6 +28,15 @@ func NextMonth(t time.Time) time.Time {
 	return start.AddDate(0, 1, 0)
 }
 
+func LookbackMonths(now time.Time) []time.Time {
+	now = time.Date(now.UTC().Year(), now.UTC().Month(), 1, 0, 0, 0, 0, time.UTC)
+	out := make([]time.Time, 0, LedgerMonthLookback+1)
+	for i := LedgerMonthLookback; i >= 0; i-- {
+		out = append(out, now.AddDate(0, -i, 0))
+	}
+	return out
+}
+
 // GetCostForecast rejects a start date after today; clamp next-month bounds to today.
 func ForecastAPIStart(monthStart string, today time.Time) string {
 	day := today.UTC().Format("2006-01-02")

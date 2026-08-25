@@ -13,6 +13,8 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 	home := handlers.NewHomeHandler(deps.Renderer, deps.Site, deps.Catalog, cfg, deps.Inertia)
 	contact := handlers.NewContactHandler(deps.Renderer, deps.Store, deps.Site, deps.Catalog, cfg, deps.Inertia)
 	dashboard := handlers.NewDashboardHandler(deps.Renderer, deps.Store, deps.Site, cfg, deps.Inertia).WithSyncer(deps.Syncer)
+	compare := handlers.NewCompareHandler(deps.Store, deps.Site, cfg, deps.Inertia).WithSyncer(deps.Syncer)
+	anomalies := handlers.NewAnomaliesHandler(deps.Store, deps.Site, cfg, deps.Inertia).WithSyncer(deps.Syncer)
 	auth := handlers.NewAuthHandler(deps.Renderer, deps.Store, deps.Site, deps.Store.Sessions(), cfg, deps.Catalog, deps.Inertia)
 	accounts := handlers.NewAccountsHandler(deps.Store, deps.Site, cfg, deps.Inertia, deps.AppSecret).WithSyncer(deps.Syncer)
 	resources := handlers.NewResourcesHandler(deps.Store, deps.Site, deps.Inertia)
@@ -43,6 +45,8 @@ func registerRoutes(r *cais.Router, deps Deps, cfg cais.Config) {
 		return middleware.RequireAuthFunc("/login", next)
 	}
 	r.Get("/dashboard", authN(dashboard.ServeHTTP))
+	r.Get("/compare", authN(compare.ServeHTTP))
+	r.Get("/anomalies", authN(anomalies.ServeHTTP))
 	r.Get("/resources", authN(resources.List))
 	r.Get("/accounts", authN(accounts.List))
 	r.Post("/accounts", authN(accounts.Create))

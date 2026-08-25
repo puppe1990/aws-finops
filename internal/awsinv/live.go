@@ -106,8 +106,26 @@ func (l *Live) ForecastForMonth(ctx context.Context, creds Credentials, period t
 	return collectCostForecast(ctx, cfg, period, time.Now().UTC())
 }
 
+func (l *Live) CostByMonth(ctx context.Context, creds Credentials, from, to time.Time) ([]models.CostLine, error) {
+	cfg, err := loadAWS(ctx, creds)
+	if err != nil {
+		return nil, err
+	}
+	return collectCostByMonth(ctx, cfg, from, to)
+}
+
+func (l *Live) CostAnomalies(ctx context.Context, creds Credentials, from, to time.Time) ([]CostAnomaly, error) {
+	cfg, err := loadAWS(ctx, creds)
+	if err != nil {
+		return nil, err
+	}
+	return collectCostAnomalies(ctx, cfg, from, to)
+}
+
 var _ MonthCoster = (*Live)(nil)
 var _ CostForecaster = (*Live)(nil)
+var _ RangeCoster = (*Live)(nil)
+var _ AnomalyFinder = (*Live)(nil)
 
 func collectCostExplorer(ctx context.Context, cfg aws.Config, period time.Time) ([]models.CostLine, error) {
 	start, end := MonthBounds(period)
