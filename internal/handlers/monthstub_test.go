@@ -33,3 +33,12 @@ func (s *stubForecastCollector) ForecastForMonth(_ context.Context, _ awsinv.Cre
 	s.period = period
 	return s.cents, s.err
 }
+
+type stubRangeCollector struct {
+	stubMonthCollector
+	rangeLines []models.CostLine
+}
+
+func (s stubRangeCollector) CostByMonth(_ context.Context, _ awsinv.Credentials, _, _ time.Time) ([]models.CostLine, error) {
+	return s.rangeLines, s.err
+}

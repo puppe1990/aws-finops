@@ -59,6 +59,8 @@ var ptMessages = map[string]string{
 	"layout.footer": "Rodando leve no Lightsail",
 
 	"nav.ledger":    "Livro-caixa",
+	"nav.compare":   "Comparativo",
+	"nav.anomalies": "Anomalias",
 	"nav.resources": "Recursos",
 	"nav.accounts":  "Contas AWS",
 	"nav.budgets":   "Orçamentos",
@@ -116,6 +118,18 @@ var ptMessages = map[string]string{
 	"dash.m10":               "out",
 	"dash.m11":               "nov",
 	"dash.m12":               "dez",
+
+	"cmp.title":    "Comparativo mensal",
+	"cmp.by_month": "Por mês",
+	"cmp.services": "Este mês vs o anterior",
+	"cmp.empty":    "Nenhum mês no Cost Explorer ainda.",
+	"cmp.mom":      "vs mês anterior",
+
+	"ano.title":  "Anomalias",
+	"ano.empty":  "Nenhuma anomalia nesta janela.",
+	"ano.ce":     "Cost Explorer",
+	"ano.spike":  "Salto de gasto",
+	"ano.impact": "Impacto",
 
 	"res.title":          "Inventário",
 	"res.lead":           "Tudo que o Cifra consegue ver com a IAM atual, isolado neste workspace.",

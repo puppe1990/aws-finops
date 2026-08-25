@@ -61,6 +61,19 @@ func TestNextMonth(t *testing.T) {
 	}
 }
 
+func TestLookbackMonths_includesFloorAndCurrent(t *testing.T) {
+	got := LookbackMonths(time.Date(2026, 8, 24, 15, 0, 0, 0, time.UTC))
+	if len(got) != LedgerMonthLookback+1 {
+		t.Fatalf("len=%d", len(got))
+	}
+	if got[0] != time.Date(2025, 8, 1, 0, 0, 0, 0, time.UTC) {
+		t.Fatalf("floor=%v", got[0])
+	}
+	if got[len(got)-1] != time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC) {
+		t.Fatalf("current=%v", got[len(got)-1])
+	}
+}
+
 func TestForecastAPIStart_clampsFutureMonthToToday(t *testing.T) {
 	today := time.Date(2026, 8, 24, 15, 0, 0, 0, time.UTC)
 	if got := ForecastAPIStart("2026-09-01", today); got != "2026-08-24" {

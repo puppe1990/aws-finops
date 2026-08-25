@@ -21,6 +21,8 @@
 
   $: nav = [
     { href: '/dashboard', label: t(labels, 'nav.ledger') },
+    { href: '/compare', label: t(labels, 'nav.compare') },
+    { href: '/anomalies', label: t(labels, 'nav.anomalies') },
     { href: '/resources', label: t(labels, 'nav.resources') },
     { href: '/accounts', label: t(labels, 'nav.accounts') },
     { href: '/budgets', label: t(labels, 'nav.budgets') },
@@ -112,8 +114,8 @@
               class="mt-1 w-full rounded-sm border border-ink-700 bg-ink-800 px-2 py-1.5 text-xs text-paper-50"
               on:change={switchTenant}
             >
-              {#each tenants as t}
-                <option value={t.id} selected={tenant && t.id === tenant.id}>{t.name}</option>
+              {#each tenants as ws}
+                <option value={ws.id} selected={tenant && ws.id === tenant.id}>{ws.name}</option>
               {/each}
             </select>
           </label>

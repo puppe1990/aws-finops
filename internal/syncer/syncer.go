@@ -104,6 +104,54 @@ func (s *Syncer) CostForMonth(ctx context.Context, tenantID int64, period time.T
 	return all, nil
 }
 
+func (s *Syncer) CostAnomalies(ctx context.Context, tenantID int64, from, to time.Time) ([]awsinv.CostAnomaly, error) {
+	af, ok := s.collector.(awsinv.AnomalyFinder)
+	if !ok {
+		return nil, nil
+	}
+	accounts, err := s.store.ListCloudAccounts(tenantID)
+	if err != nil {
+		return nil, err
+	}
+	var all []awsinv.CostAnomaly
+	for _, acc := range accounts {
+		creds, err := s.credsFor(acc)
+		if err != nil {
+			return nil, fmt.Errorf("anomalies %s: %w", acc.AWSAccountID, err)
+		}
+		items, err := af.CostAnomalies(ctx, creds, from, to)
+		if err != nil {
+			return nil, fmt.Errorf("anomalies %s: %w", acc.AWSAccountID, err)
+		}
+		all = append(all, items...)
+	}
+	return all, nil
+}
+
+func (s *Syncer) CostByMonth(ctx context.Context, tenantID int64, from, to time.Time) ([]models.CostLine, error) {
+	rc, ok := s.collector.(awsinv.RangeCoster)
+	if !ok {
+		return nil, nil
+	}
+	accounts, err := s.store.ListCloudAccounts(tenantID)
+	if err != nil {
+		return nil, err
+	}
+	var all []models.CostLine
+	for _, acc := range accounts {
+		creds, err := s.credsFor(acc)
+		if err != nil {
+			return nil, fmt.Errorf("ce %s: %w", acc.AWSAccountID, err)
+		}
+		lines, err := rc.CostByMonth(ctx, creds, from, to)
+		if err != nil {
+			return nil, fmt.Errorf("ce %s: %w", acc.AWSAccountID, err)
+		}
+		all = append(all, lines...)
+	}
+	return all, nil
+}
+
 func (s *Syncer) ForecastForMonth(ctx context.Context, tenantID int64, period time.Time) (int64, error) {
 	fc, ok := s.collector.(awsinv.CostForecaster)
 	if !ok {
