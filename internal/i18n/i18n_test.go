@@ -34,6 +34,9 @@ func TestLabels_compareKeys(t *testing.T) {
 	if en["cmp.title"] == "" || pt["cmp.title"] == "" {
 		t.Fatal("missing cmp.title")
 	}
+	if en["cmp.by_service"] != "By service" || pt["cmp.by_service"] != "Por serviço" {
+		t.Fatalf("by_service en=%q pt=%q", en["cmp.by_service"], pt["cmp.by_service"])
+	}
 }
 
 func TestLabels_anomaliesKeys(t *testing.T) {

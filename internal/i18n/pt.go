@@ -119,11 +119,12 @@ var ptMessages = map[string]string{
 	"dash.m11":               "nov",
 	"dash.m12":               "dez",
 
-	"cmp.title":    "Comparativo mensal",
-	"cmp.by_month": "Por mês",
-	"cmp.services": "Este mês vs o anterior",
-	"cmp.empty":    "Nenhum mês no Cost Explorer ainda.",
-	"cmp.mom":      "vs mês anterior",
+	"cmp.title":      "Comparativo mensal",
+	"cmp.by_month":   "Por mês",
+	"cmp.services":   "Este mês vs o anterior",
+	"cmp.by_service": "Por serviço",
+	"cmp.empty":      "Nenhum mês no Cost Explorer ainda.",
+	"cmp.mom":        "vs mês anterior",
 
 	"ano.title":  "Anomalias",
 	"ano.empty":  "Nenhuma anomalia nesta janela.",

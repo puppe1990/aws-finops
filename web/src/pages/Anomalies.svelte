@@ -23,8 +23,9 @@
 </svelte:head>
 
 <AppLayout {site} {flash} {tenant} {tenants} {userEmail} {labels} {locale}>
-  <h2 class="font-display text-4xl">{t(labels, 'ano.title')}</h2>
-  <p class="mt-2 font-mono text-xs text-paper-200">{(anomalies || []).length}</p>
+  <p class="font-mono text-[11px] uppercase tracking-[0.3em] text-copper-400">{t(labels, 'nav.anomalies')}</p>
+  <h2 class="mt-1 font-display text-4xl">{t(labels, 'ano.title')}</h2>
+  <p class="mt-8 font-display text-6xl leading-none tracking-tight text-copper-400">{(anomalies || []).length}</p>
 
   {#if ceDenied}
     <p class="mt-6 text-sm text-paper-200">
@@ -32,27 +33,26 @@
     </p>
   {/if}
 
-  <ul class="mt-10 divide-y divide-ink-700 border border-paper-200/15">
+  <ul class="mt-12 space-y-3">
     {#each anomalies as a}
-      <li class="bg-ink-900">
+      <li>
         <a
           href={a.query ? `/dashboard?month=${a.query}` : '/compare'}
           use:inertia
-          class="block px-4 py-3 hover:bg-ink-800"
+          class="block border border-paper-200/15 bg-ink-900 p-4 hover:border-copper-500"
         >
           <p class="font-mono text-[10px] uppercase tracking-widest text-copper-400">{kindLabel(a.kind)}</p>
-          <p class="mt-1 text-sm">{a.service || a.query}</p>
-          <p class="mt-1 font-mono text-xs text-paper-200">
-            {t(labels, 'ano.impact')}
-            {a.usd}
-            {#if a.start}
-              <span> · {a.start}</span>
-            {/if}
-          </p>
+          <div class="mt-2 flex items-baseline justify-between gap-4">
+            <p class="font-display text-xl leading-tight">{a.service || a.query}</p>
+            <p class="shrink-0 font-mono text-lg text-copper-400">{a.usd}</p>
+          </div>
+          {#if a.start}
+            <p class="mt-2 font-mono text-[11px] uppercase tracking-widest text-paper-200">{a.start}</p>
+          {/if}
         </a>
       </li>
     {:else}
-      <li class="bg-ink-900 px-4 py-6 text-sm text-paper-200">{t(labels, 'ano.empty')}</li>
+      <li class="border border-paper-200/15 bg-ink-900 px-4 py-6 text-sm text-paper-200">{t(labels, 'ano.empty')}</li>
     {/each}
   </ul>
 </AppLayout>

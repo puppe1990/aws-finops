@@ -119,11 +119,12 @@ var enMessages = map[string]string{
 	"dash.m11":               "Nov",
 	"dash.m12":               "Dec",
 
-	"cmp.title":    "Month compare",
-	"cmp.by_month": "By month",
-	"cmp.services": "This month vs last",
-	"cmp.empty":    "No Cost Explorer months yet.",
-	"cmp.mom":      "vs previous month",
+	"cmp.title":      "Month compare",
+	"cmp.by_month":   "By month",
+	"cmp.services":   "This month vs last",
+	"cmp.by_service": "By service",
+	"cmp.empty":      "No Cost Explorer months yet.",
+	"cmp.mom":        "vs previous month",
 
 	"ano.title":  "Anomalies",
 	"ano.empty":  "No anomalies in this window.",

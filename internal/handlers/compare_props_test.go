@@ -44,6 +44,58 @@ func TestCompareMonthRows_newestFirstWithDelta(t *testing.T) {
 	}
 }
 
+func TestCompareServiceHistory_seriesOldestFirst(t *testing.T) {
+	jul := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	aug := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	rows := compareServiceHistory([]awsinv.MonthCost{
+		{Query: "2026-07", Period: jul, Lines: []models.CostLine{
+			{Service: "Amazon Lightsail", MonthlyCents: 3220},
+			{Service: "Amazon S3", MonthlyCents: 100},
+		}},
+		{Query: "2026-08", Period: aug, Lines: []models.CostLine{
+			{Service: "Amazon Lightsail", MonthlyCents: 1983},
+			{Service: "Amazon S3", MonthlyCents: 200},
+		}},
+	})
+	if len(rows) != 2 {
+		t.Fatalf("len=%d", len(rows))
+	}
+	top := rows[0]
+	if top["name"] != "Amazon Lightsail" || top["currentUSD"] != "US$ 19,83" {
+		t.Fatalf("top=%v", top)
+	}
+	series, _ := top["months"].([]map[string]any)
+	if len(series) != 2 || series[0]["query"] != "2026-07" || series[0]["cents"] != int64(3220) {
+		t.Fatalf("series=%v", series)
+	}
+	if series[1]["query"] != "2026-08" || series[1]["usd"] != "US$ 19,83" {
+		t.Fatalf("aug=%v", series[1])
+	}
+	want := int64((1983 - 3220) * 10000 / 3220)
+	if top["deltaBps"] != want {
+		t.Fatalf("deltaBps=%v want %d", top["deltaBps"], want)
+	}
+}
+
+func TestCompareServiceHistory_dropsLeadingEmptyMonths(t *testing.T) {
+	jun := time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)
+	jul := time.Date(2026, 7, 1, 0, 0, 0, 0, time.UTC)
+	aug := time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)
+	rows := compareServiceHistory([]awsinv.MonthCost{
+		{Query: "2026-06", Period: jun, Cents: 0},
+		{Query: "2026-07", Period: jul, Cents: 3220, Lines: []models.CostLine{
+			{Service: "Amazon Lightsail", MonthlyCents: 3220},
+		}},
+		{Query: "2026-08", Period: aug, Cents: 1983, Lines: []models.CostLine{
+			{Service: "Amazon Lightsail", MonthlyCents: 1983},
+		}},
+	})
+	series, _ := rows[0]["months"].([]map[string]any)
+	if len(series) != 2 || series[0]["query"] != "2026-07" {
+		t.Fatalf("series=%v", series)
+	}
+}
+
 func TestCompareServiceRows_pairsCurrentAndPrevious(t *testing.T) {
 	rows := compareServiceRows(
 		[]models.CostLine{
